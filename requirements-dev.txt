@@ -1,0 +1,14 @@
+pytest
+pytest-cov
+pytest-mock
+faker
+mkdocs
+mkdocs-jupyter
+mkdocs-material
+mkdocs-material-extensions
+mkdocs-pdf-export-plugin
+weasyprint
+isort
+black
+black[jupyter]
+pre-commit

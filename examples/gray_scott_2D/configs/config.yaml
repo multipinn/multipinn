@@ -1,0 +1,49 @@
+problem:
+  name: "gray_scott_2D"
+  t_max: 200
+
+model:
+  type: FNN
+  params:
+    hidden_layers: [64, 64, 64, 64, 64, 64, 64, 64, 64]
+
+model_target:
+  _target_: multipinn.neural_network.${model.type}
+
+regularization:
+  type: Pointwise # Pointwise, Constant, Gradient, Normal, null
+  params:
+    ignored_indexes: [0]
+    # lambdas: [1, 1, 1, 1]
+
+regularization_target:
+  _target_: multipinn.regularization.${regularization.type}Losses
+
+generator:
+  domain_points: 50_000
+  bound_points: 5_000
+  sampler: "pseudo"
+
+trainer:
+  num_epochs: 100_000
+  grid_update: 20_000
+  random_seed: 42
+  calc_loss: "legacy" # "mean", "legacy"
+
+visualization:
+  grid_plot_points: 20_000
+  save_period: 2000
+  save_mode: "html"
+
+scheduler:
+  _target_: torch.optim.lr_scheduler.ExponentialLR
+  gamma: 0.9999
+
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 0.001
+
+paths:
+  save_dir: ${hydra:runtime.cwd}/examples/${problem.name}/artifacts/${model.type}_${regularization.type}
+  points: ${hydra:runtime.cwd}/examples/${problem.name}/points.dat
+  val: ${hydra:runtime.cwd}/examples/${problem.name}/values.dat
