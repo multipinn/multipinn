@@ -10,7 +10,7 @@ model_target:
   _target_: multipinn.neural_network.${model.type}
 
 regularization:
-  type: Normal # Pointwise, Constant, Gradient, Normal, null
+  type: Gradient # Pointwise, Constant, Gradient, Normal, null
   params:
     alpha: 0.9
     # ignored_indexes: [0]
