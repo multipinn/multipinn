@@ -11,10 +11,10 @@ model_target:
   _target_: multipinn.neural_network.${model.type}
 
 regularization:
-  type: Constant # Pointwise, Constant, Gradient, Normal, null
+  type: Pointwise # Constant, Gradient, Normal, null
   params:
-    # ignored_indexes: [0]
-    lambdas:  [1, 1, 1, 1, 1, 1, 1, 1]
+    ignored_indexes: [0]
+    # lambdas:  [1, 1, 1, 1, 1, 1, 1, 1]
 
 regularization_target:
   _target_: multipinn.regularization.${regularization.type}Losses

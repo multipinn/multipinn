@@ -9,12 +9,11 @@ class NormalLosses(BasicLosses):
         self.lambda_regularization = None
         self.alpha = alpha
 
-    """
-    Calculate regularization param and return losses multiply on it
-    Requirement: First loss must relate to inner area.
-    """
-
     def __call__(self, trainer):
+        """
+        Calculate regularization param and return losses multiply on it
+        Requirement: First loss must relate to inner area.
+        """
         losses = trainer.pinn.calculate_loss()
         losses_true = losses.copy()
         if len(trainer.pinn.conditions) != len(losses):

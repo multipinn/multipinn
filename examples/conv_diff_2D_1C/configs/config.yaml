@@ -5,17 +5,17 @@ model:
   type: FNN
   params:
     hidden_layers: [64, 64, 64, 64, 64, 64, 64, 64, 64]
-    sigma: 1.0
-    encoding_dim: 64
+    # sigma: 1.0
+    # encoding_dim: 64
 
 model_target:
   _target_: multipinn.neural_network.${model.type}
 
 regularization:
-  type: Constant # Pointwise, Constant, Gradient, Normal, null
+  type: Normal # Pointwise, Constant, Gradient, Normal, null
   params:
-    # ignored_indexes: [0]
-    lambdas: [1, 1, 1, 1]
+    alpha: 0.9
+    # lambdas: [1, 1, 1, 1]
 
 regularization_target:
   _target_: multipinn.regularization.${regularization.type}Losses
