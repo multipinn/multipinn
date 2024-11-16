@@ -55,7 +55,7 @@ def navier_stokes_equation_with_obstacle(re=50):
 
     def inlet_cond(arg, model):
         data, x, y = basic_symbols(arg, model)
-        return [data["u"] - (-0.16 * y**2 + 1), data["v"]]
+        return [data["u"] - (-((y / 3) ** 2) + 1), data["v"]]
 
     def outlet_cond(arg, model):
         data, x, y = basic_symbols(arg, model)
