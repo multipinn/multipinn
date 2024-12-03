@@ -60,13 +60,15 @@ def train(cfg: DictConfig):
         )
     ]
 
-    metric = PointCloudMetric.from_files(
-        cfg.paths.points, cfg.paths.val, metric=l_inf_error, field_names=["u", "v"]
-    )
+    # You can use this metric to compare the results with the numeric solution.
 
-    callbacks += [
-        MetricWriter([metric], cfg.paths.save_dir, period=cfg.visualization.save_period)
-    ]
+    # metric = PointCloudMetric.from_files(
+    #     cfg.paths.points, cfg.paths.val, metric=l_inf_error, field_names=["u", "v"]
+    # )
+
+    # callbacks += [
+    #     MetricWriter([metric], cfg.paths.save_dir, period=cfg.visualization.save_period)
+    # ]
 
     trainer = Trainer(
         pinn=pinn,
