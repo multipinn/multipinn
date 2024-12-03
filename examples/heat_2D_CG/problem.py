@@ -37,21 +37,21 @@ def problem():
     def rect_bnd_f(model, arg, data):
         f, u, x, y, t = basic_symbols(model, arg)
         normal = data[0]
-        (u_n,) = unpack(num_diff_random(model, f, arg, normal))
+        (u_n,) = unpack(num_diff_random(model, arg, f, normal))
 
         return [-C * u_n - G_BOUNDARY + Q_BOUNDARY * u]
 
     def small_circle_bnd(model, arg, data):
         f, u, x, y, t = basic_symbols(model, arg)
         normal = data[0]
-        (u_n,) = unpack(num_diff_random(model, f, arg, normal))
+        (u_n,) = unpack(num_diff_random(model, arg, f, normal))
 
         return [-C * u_n - G_S_CIRCLE + Q_S_CIRCLE * u]
 
     def large_circle_bnd(model, arg, data):
         f, u, x, y, t = basic_symbols(model, arg)
         normal = data[0]
-        (u_n,) = unpack(num_diff_random(model, f, arg, normal))
+        (u_n,) = unpack(num_diff_random(model, arg, f, normal))
 
         return [-C * u_n - G_L_CIRCLE + Q_L_CIRCLE * u]
 

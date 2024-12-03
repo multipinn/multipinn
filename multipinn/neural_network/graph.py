@@ -1,9 +1,10 @@
 import torch
-import torch_scatter
 from torch import nn
 from torch_geometric.data import Data
 from torch_geometric.nn.conv import MessagePassing
 from torch_geometric.nn.pool.glob import global_mean_pool
+
+from multipinn.mesh import scatter
 
 
 class GNN(nn.Module):
@@ -174,9 +175,7 @@ class ProcessorLayer(MessagePassing):
 
     def aggregate(self, updated_edges, edge_index):
         node_dim = 0
-        out = torch_scatter.scatter(
-            updated_edges, edge_index[0, :], dim=node_dim, reduce="mean"
-        )
+        out = scatter(updated_edges, edge_index[0, :], dim=node_dim, reduce="mean")
         return out, updated_edges
 
 
@@ -197,9 +196,7 @@ class SmoothingLayer(MessagePassing):
 
     def aggregate(self, updated_edges, edge_index):
         node_dim = 0
-        out = torch_scatter.scatter(
-            updated_edges, edge_index[0, :], dim=node_dim, reduce="mean"
-        )
+        out = scatter(updated_edges, edge_index[0, :], dim=node_dim, reduce="mean")
         return out, updated_edges
 
 

@@ -64,14 +64,16 @@ def train(cfg: DictConfig):
         )
     ]
 
-    metric = PointCloudMetric.from_comsol_file(
-        "C:\\Users\\brat_\PycharmProjects\lab\multipinn\examples\heat_2D_CG\heat_complex.dat",
-        is_stationary=False,
-    )
+    # You can use this metric to compare the results with COMSOL numeric solution.
 
-    callbacks += [
-        MetricWriter([metric], cfg.paths.save_dir, period=cfg.visualization.save_period)
-    ]
+    # metric = PointCloudMetric.from_comsol_file(
+    #     cfg.paths.data,
+    #     is_stationary=False,
+    # )
+
+    # callbacks += [
+    #     MetricWriter([metric], cfg.paths.save_dir, period=cfg.visualization.save_period)
+    # ]
 
     trainer = Trainer(
         pinn=pinn,

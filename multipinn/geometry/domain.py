@@ -354,14 +354,15 @@ class DomainProduct(Domain):
         )
 
     def boundary_normal(self, x):
-        x1, x2 = self.__split(x)
-        norm1 = self.geom1.on_boundary(x1)[:, np.newaxis] * self.geom1.boundary_normal(
-            x1
+        return np.concatenate(
+            (
+                self.geom1.on_boundary(x[:, : self.geom1.dim])[:, np.newaxis]
+                * self.geom1.boundary_normal(x[:, : self.geom1.dim]),
+                self.geom2.on_boundary(x[:, self.geom1.dim :])[:, np.newaxis]
+                * self.geom2.boundary_normal(x[:, self.geom1.dim :]),
+            ),
+            axis=1,
         )
-        norm2 = (
-            self.geom2.on_boundary(x2)[:, np.newaxis] * self.geom2.boundary_normal(x2),
-        )
-        return np.concatenate((norm1, norm2), axis=1)
 
     def random_points(self, n, random="pseudo"):
         return np.concatenate(

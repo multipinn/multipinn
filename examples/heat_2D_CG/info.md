@@ -19,3 +19,5 @@ with $g = 5$ and $q = 1$. The positions of small circles are
 $$(\pm3.2, \pm6), \quad (\pm3.2,0), \quad r = 0.4$$
 
 with $g = 1$ and $q = 1$. For the rectangular boundary conditions, $g = 0.1$ and $q = 1$.
+
+Data: [file.dat](https://github.com/i207M/PINNacle/blob/main/ref/heat_complex.dat)

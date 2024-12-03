@@ -73,14 +73,16 @@ def train(cfg: DictConfig):
         )
         for i in range(output_dim)
     ]
+    # You can use this metric to compare the results with COMSOL numeric solution.
+    # Look at the `info.md` for more information.
 
-    metric = PointCloudMetric.from_comsol_file(
-        cfg.paths.data, is_stationary=True, field_names=["u", "v", "p"]
-    )
+    # metric = PointCloudMetric.from_comsol_file(
+    #     cfg.paths.solution, is_stationary=True, field_names=["u", "v", "p"]
+    # )
 
-    callbacks += [
-        MetricWriter([metric], cfg.paths.save_dir, period=cfg.visualization.save_period)
-    ]
+    # callbacks += [
+    #     MetricWriter([metric], cfg.paths.save_dir, period=cfg.visualization.save_period)
+    # ]
 
     trainer = Trainer(
         pinn=pinn,

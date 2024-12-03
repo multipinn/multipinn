@@ -23,7 +23,7 @@ def laplace2D_1C(focus=1):
         eq0 = u_xx + u_yy
         return [eq0]
 
-    def bc(arg, data, model):
+    def bc(model, arg, data):
         f, u, x, y = basic_symbols(model, arg)
         normal = data[0]
         # u_x, u_y = unpack(grad(u, arg))
