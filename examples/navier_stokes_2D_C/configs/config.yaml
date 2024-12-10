@@ -46,4 +46,4 @@ optimizer:
 
 paths:
   save_dir: ${hydra:runtime.cwd}/examples/${problem.name}/artifacts/${model.type}_reg_${regularization.type}_loss_${trainer.calc_loss}_re_${problem.re}
-  solution: ${hydra:runtime.cwd}/examples/${problem.name}/lid_driven_a${problem.a}.dat
+  solution: ${hydra:runtime.cwd}/examples/${problem.name}/data/lid_driven_a${problem.a}.dat

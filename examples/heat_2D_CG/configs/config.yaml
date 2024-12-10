@@ -45,4 +45,4 @@ optimizer:
 
 paths:
   save_dir: ${hydra:runtime.cwd}/examples/${problem.name}/artifacts/${model.type}_${regularization.type}
-  data: ${hydra:runtime.cwd}/examples/${problem.name}/heat_complex.dat
+  data: ${hydra:runtime.cwd}/examples/${problem.name}/data/heat_complex.dat

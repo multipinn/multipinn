@@ -18,4 +18,6 @@ $$p = 0, \quad \mathbf{x} = (0,0).$$
 
 The Reynolds number $Re = 100$, $a=4$.
 
-Data: [file.dat](https://github.com/i207M/PINNacle/raw/refs/heads/main/ref/lid_driven_a4.dat)
+Data: [lid_driven_a4.dat](https://disk.yandex.ru/d/8cYMQthwn7fv-Q) should be placed at `examples/navier_stokes_2D_C/data/lid_driven_a4.dat`.
+
+This file needs to be downloaded if you want to calculate the error between the PINN's and numeric solutions.

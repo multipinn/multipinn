@@ -20,4 +20,6 @@ $$(\pm3.2, \pm6), \quad (\pm3.2,0), \quad r = 0.4$$
 
 with $g = 1$ and $q = 1$. For the rectangular boundary conditions, $g = 0.1$ and $q = 1$.
 
-Data: [file.dat](https://github.com/i207M/PINNacle/blob/main/ref/heat_complex.dat)
+Data: [heat_complex.dat](https://disk.yandex.ru/d/fAh4G07vZeM6NA) should be placed at `examples/heat_2D_CG/data/heat_complex.dat`.
+
+This file needs to be downloaded if you want to calculate the error between the PINN's and numeric solutions.
