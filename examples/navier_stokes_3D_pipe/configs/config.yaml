@@ -1,0 +1,47 @@
+problem:
+  name: "navier_stokes_3D_pipe"
+  re: 60
+
+model:
+  type: FNN
+  params:
+     hidden_layers: [64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64]
+    # hidden_layers: [64, 128, 128, 128, 64]
+model_target:
+  _target_: multipinn.neural_network.${model.type}
+
+regularization:
+  type: Constant # Pointwise, Constant, Gradient, Normal, null
+  params:
+    lambdas: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+
+regularization_target:
+  _target_: multipinn.regularization.${regularization.type}Losses
+
+
+generator:
+  domain_points: 20_000
+  bound_points: 2_000
+  sampler: "pseudo"
+
+trainer:
+  num_epochs: 100000
+  grid_update: null
+  random_seed: 42
+  calc_loss: "mean" # "mean", "legacy"
+
+visualization:
+  grid_plot_points: 5000
+  save_period: 2000
+  save_mode: "html"
+
+scheduler:
+  _target_: torch.optim.lr_scheduler.ExponentialLR
+  gamma: 0.9999
+
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 0.001
+
+paths:
+  save_dir: ${hydra:runtime.cwd}/examples/${problem.name}/artifacts/${model.type}${model.params.hidden_layers}${problem.re}
