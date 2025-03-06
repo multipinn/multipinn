@@ -7,44 +7,9 @@ import torch
 
 from .generator import Generator
 from ..condition import Condition
-# from ..geometry.rectangle import RectangleArea
-
-class UniformGeneratorRect(Generator):
-    def __init__(self, n_points, method='uniform'):
-        """Class of nonadaptive sampling methods
-
-        Args:
-            n_points (_type_): number of points to sample
-            method (_type_): nonadaptive algorithms
-        """
-        self.n_points = n_points
-        self.method = method
-        self.num_batches = 1
-
-    def set_batching(self, new_num_batches):
-        self.n_points = self.n_points // self.num_batches * new_num_batches
-        self.num_batches = new_num_batches
-
-    def generate(self, geometry, condition: Condition, model):
-        if self.method == 'uniform':
-            return self.generate_uniform(geometry)
-        else:
-            raise Exception('unknown method = ' + self.method)
-
-    def generate_uniform(self, geometry):
-        points = torch.tensor(
-            np.random.uniform(
-                low=geometry.low,
-                high=geometry.high,
-                size=(self.n_points, len(geometry.low)),
-            ),
-            dtype=torch.float32,
-            requires_grad=True,
-        )
-        return points
 
 
-class AdaptiveGeneratorRect(UniformGeneratorRect):
+class AdaptiveGeneratorRect(Generator):
     def __init__(self, n_points, power_coeff=3, add_coeff=1, density_rec_points_num=None,
                  add_points=None, n_points_up_bnd=None):
         super().__init__(n_points)
@@ -119,9 +84,11 @@ class AdaptiveGeneratorRectRAR_D(AdaptiveGeneratorRect):
             torch.tensor: training points tensor
         """
         if condition.points is None:
-            points = super().generate_uniform(condition.geometry)
+            points = super().generate(condition, model)
+            self.points = points
             return points
         if condition.points.shape[0] >= self.n_points_up_bnd:
+            self.points = condition.points
             return condition.points
 
         density_points, error = self.calc_error_field(condition.geometry, condition, model)
@@ -132,6 +99,7 @@ class AdaptiveGeneratorRectRAR_D(AdaptiveGeneratorRect):
             torch.stack(condition.get_residual(model), dim=1).abs().sum(dim=1).cpu().detach().numpy(), self.add_points)
         points = torch.cat([chosen_points, condition.points[delete_points_id]], dim=0).detach().requires_grad_()
         points.update = chosen_points.clone().detach().cpu().numpy()
+        self.points = points
         return points
 
 
@@ -160,9 +128,11 @@ class AdaptiveGeneratorRectRAR_G(AdaptiveGeneratorRect):
             torch.tensor: training points tensor
         """
         if condition.points is None:
-            points = super().generate_uniform(condition.geometry)
+            points = super().generate(condition, model)
+            self.points = points
             return points
         if condition.points.shape[0] >= self.n_points_up_bnd:
+            self.points = condition.points
             return condition.points
         density_points, error = self.calc_error_field(condition.geometry, condition, model)
         chosen_points_id = self.sample_max_error(error, self.add_points)
@@ -172,6 +142,7 @@ class AdaptiveGeneratorRectRAR_G(AdaptiveGeneratorRect):
         points = torch.cat([chosen_points, condition.points], dim=0)[:self.n_points].detach().requires_grad_()
         points.update = chosen_points.clone().detach().cpu().numpy()
         # points.update = chosen_points.clone().detach().cpu().numpy()
+        self.points = points
         return points
 
 
@@ -196,7 +167,8 @@ class AdaptiveGeneratorRectRAD(AdaptiveGeneratorRect):
             torch.tensor: training points tensor
         """
         if condition.points is None:
-            points = super().generate_uniform(condition.geometry)
+            points = super().generate(condition, model)
+            self.points = points
             return points
 
         density_points, error = self.calc_error_field(condition.geometry, condition, model)
@@ -204,6 +176,7 @@ class AdaptiveGeneratorRectRAD(AdaptiveGeneratorRect):
         chosen_points = density_points[chosen_points_id].requires_grad_()
         del density_points
         chosen_points.update = chosen_points.clone().detach().cpu().numpy()
+        self.points = chosen_points
         return chosen_points
 
 
@@ -230,11 +203,12 @@ class AdaptiveGeneratorRectRAG(AdaptiveGeneratorRect):
         """
 
         if condition.points is None:
-            points = super().generate_uniform(condition.geometry)
+            points = super().generate(condition, model)
+            self.points = points
             return points
-
         density_points, error = self.calc_error_field(condition.geometry, condition, model)
         chosen_points_id = self.sample_max_error(error, self.n_points)
         chosen_points = density_points[chosen_points_id].requires_grad_()
         chosen_points.update = chosen_points.clone().detach().cpu().numpy()
+        self.points = chosen_points
         return chosen_points
