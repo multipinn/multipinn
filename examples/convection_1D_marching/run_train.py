@@ -4,7 +4,7 @@ import hydra
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 
-from examples.poisson_3D_pipe.problem import poisson_3D_pipe
+from examples.convection_1D_marching.problem import convection_problem
 from multipinn import *
 from multipinn.utils import (
     initialize_model,
@@ -19,22 +19,28 @@ def train(cfg: DictConfig):
     config_save_path = os.path.join(cfg.paths.save_dir, "used_config.yaml")
     save_config(cfg, config_save_path)
 
-    conditions, input_dim, output_dim = poisson_3D_pipe()
+    conditions, input_dim, output_dim, basic_symbols = convection_problem(
+        cfg.problem.betta, cfg.problem.t_max
+    )
 
     set_device_and_seed(cfg.trainer.random_seed)
 
     model = initialize_model(cfg, input_dim, output_dim)
     calc_loss = initialize_regularization(cfg)
 
-    generator_domain = Generator(
-        n_points=cfg.generator.domain_points, sampler=cfg.generator.sampler
-    )
-    generator_bound = Generator(
-        n_points=cfg.generator.bound_points, sampler=cfg.generator.sampler
-    )
+    if cfg.model.marching.use == True:
+        type_gen = "pseudo"
 
-    generator_domain.use_for(conditions[0])
-    generator_bound.use_for(conditions[1:])
+        generator_bound = Generator(cfg.generator.bound_points, type_gen)
+        generator_domain = Generator(cfg.generator.domain_points, type_gen)
+
+        generator_bound.use_for(conditions)
+        generator_domain.use_for(conditions[0])
+    else:
+        Generator(cfg.generator.bound_points, "pseudo").use_for(conditions)
+        GradBasedGenerator(cfg.generator.domain_points, "pseudo", 10).use_for(
+            conditions[0]
+        )
 
     pinn = PINN(model=model, conditions=conditions)
 
@@ -42,16 +48,24 @@ def train(cfg: DictConfig):
 
     scheduler = instantiate(cfg.scheduler, optimizer=optimizer)
 
+    grid = heatmap.Grid.from_pinn(pinn, cfg.visualization.grid_plot_points)
+
     callbacks = [
         progress.TqdmBar(
             "Epoch {epoch} lr={lr:.2e} Loss={loss_eq} Total={total_loss:.2e}"
         ),
         curve.LossCurve(cfg.paths.save_dir, cfg.visualization.save_period),
         save.SaveModel(cfg.paths.save_dir, period=cfg.visualization.save_period),
+        heatmap.HeatmapPrediction(
+            grid=grid,
+            period=cfg.visualization.save_period,
+            save_dir=cfg.paths.save_dir,
+            save_mode=cfg.visualization.save_mode,
+        ),
     ]
 
     callbacks += [
-        LiveScatterPrediction(
+        points.LiveScatterPrediction(
             save_dir=cfg.paths.save_dir,
             period=cfg.visualization.save_period,
             save_mode=cfg.visualization.save_mode,
@@ -69,7 +83,17 @@ def train(cfg: DictConfig):
         callbacks_organizer=CallbacksOrganizer(callbacks),
     )
 
-    trainer.train()
+    if cfg.model.marching.use == True:
+        marching_trainer = MarchingTrainer(
+            save_dir=cfg.paths.save_dir,
+            steps=cfg.model.marching.steps,
+            trainer=trainer,
+            epochs_per_iter=cfg.model.marching.epochs_per_iter,
+            basic_symbols=basic_symbols,
+        )
+        marching_trainer.march_trainer()
+    else:
+        trainer.train()
 
 
 if __name__ == "__main__":

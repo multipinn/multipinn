@@ -11,12 +11,18 @@ def beltrami_flow(re=60):
 
     def solution(x, y, z):
         return [
-            -(torch.exp(x) * torch.sin(y+z) + torch.exp(z) * torch.cos(x+y)),
-            -(torch.exp(y) * torch.sin(z+x) + torch.exp(x) * torch.cos(y+z)),
-            -(torch.exp(z) * torch.sin(x+y) + torch.exp(y) * torch.cos(x+z)),
-            -0.5 * (torch.exp(2*x) + torch.exp(2*y) + torch.exp(2*z) + 2 * torch.sin(x+y) * torch.cos(x+z) * torch.exp(y+z) + 
-                                                                        2 * torch.sin(y+z) * torch.cos(x+y) * torch.exp(x+z) +
-                                                                        2 * torch.sin(x+z) * torch.cos(y+z) * torch.exp(x+y))
+            -(torch.exp(x) * torch.sin(y + z) + torch.exp(z) * torch.cos(x + y)),
+            -(torch.exp(y) * torch.sin(z + x) + torch.exp(x) * torch.cos(y + z)),
+            -(torch.exp(z) * torch.sin(x + y) + torch.exp(y) * torch.cos(x + z)),
+            -0.5
+            * (
+                torch.exp(2 * x)
+                + torch.exp(2 * y)
+                + torch.exp(2 * z)
+                + 2 * torch.sin(x + y) * torch.cos(x + z) * torch.exp(y + z)
+                + 2 * torch.sin(y + z) * torch.cos(x + y) * torch.exp(x + z)
+                + 2 * torch.sin(x + z) * torch.cos(y + z) * torch.exp(x + y)
+            ),
         ]
 
     def basic_symbols(model, arg):
@@ -26,7 +32,7 @@ def beltrami_flow(re=60):
         return f, u, v, w, p, x, y, z
 
     def inner(model, arg):
-        f, u, v, w, p, x, y, z = basic_symbols(model, arg) 
+        f, u, v, w, p, x, y, z = basic_symbols(model, arg)
 
         u_x, u_y, u_z = unpack(grad(u, arg))
         v_x, v_y, v_z = unpack(grad(v, arg))
@@ -57,7 +63,7 @@ def beltrami_flow(re=60):
         return [eq1, eq2, eq3, eq4]
 
     def lamb(model, arg):
-        f, u, v, w, p, x, y, z = basic_symbols(model, arg) 
+        f, u, v, w, p, x, y, z = basic_symbols(model, arg)
         u_x, u_y, u_z = unpack(grad(u, arg))
         v_x, v_y, v_z = unpack(grad(v, arg))
         w_x, w_y, w_z = unpack(grad(w, arg))
@@ -65,14 +71,16 @@ def beltrami_flow(re=60):
         w1 = w_y - v_z
         w2 = u_z = w_x
         w3 = v_x - u_y
-        return [v * w3 - w * w2, 
-                w * w1 - u * w3,
-                u * w2 - v * w1]
-
+        return [v * w3 - w * w2, w * w1 - u * w3, u * w2 - v * w1]
 
     def walls(model, arg):
         f, u, v, w, p, x, y, z = basic_symbols(model, arg)
-        return [u-solution(x, y, z)[0], v-solution(x, y, z)[1], w-solution(x, y, z)[2], p-solution(x, y, z)[3]]
+        return [
+            u - solution(x, y, z)[0],
+            v - solution(x, y, z)[1],
+            w - solution(x, y, z)[2],
+            p - solution(x, y, z)[3],
+        ]
 
     domain = Hypercube([-1.0, -1.0, -1.0], [1.0, 1.0, 1.0])
 

@@ -4,7 +4,7 @@ import hydra
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 
-from examples.poisson_3D_pipe.problem import poisson_3D_pipe
+from examples.heat_2D_1C_marching.problem import problem_2D1C_heat_equation
 from multipinn import *
 from multipinn.utils import (
     initialize_model,
@@ -19,7 +19,13 @@ def train(cfg: DictConfig):
     config_save_path = os.path.join(cfg.paths.save_dir, "used_config.yaml")
     save_config(cfg, config_save_path)
 
-    conditions, input_dim, output_dim = poisson_3D_pipe()
+    conditions, input_dim, output_dim, basic_symbols = problem_2D1C_heat_equation(
+        cfg.problem.a,
+        cfg.problem.b,
+        cfg.problem.alpha,
+        cfg.problem.beta,
+        cfg.problem.gamma,
+    )
 
     set_device_and_seed(cfg.trainer.random_seed)
 
@@ -42,16 +48,24 @@ def train(cfg: DictConfig):
 
     scheduler = instantiate(cfg.scheduler, optimizer=optimizer)
 
+    grid = heatmap.Grid.from_pinn(pinn, cfg.visualization.grid_plot_points)
+
     callbacks = [
         progress.TqdmBar(
             "Epoch {epoch} lr={lr:.2e} Loss={loss_eq} Total={total_loss:.2e}"
         ),
         curve.LossCurve(cfg.paths.save_dir, cfg.visualization.save_period),
         save.SaveModel(cfg.paths.save_dir, period=cfg.visualization.save_period),
+        heatmap.HeatmapPrediction(
+            grid=grid,
+            period=cfg.visualization.save_period,
+            save_dir=cfg.paths.save_dir,
+            save_mode=cfg.visualization.save_mode,
+        ),
     ]
 
     callbacks += [
-        LiveScatterPrediction(
+        points.LiveScatterPrediction(
             save_dir=cfg.paths.save_dir,
             period=cfg.visualization.save_period,
             save_mode=cfg.visualization.save_mode,
@@ -69,7 +83,17 @@ def train(cfg: DictConfig):
         callbacks_organizer=CallbacksOrganizer(callbacks),
     )
 
-    trainer.train()
+    if cfg.model.marching.use == True:
+        marching_trainer = MarchingTrainer(
+            save_dir=cfg.paths.save_dir,
+            steps=cfg.model.marching.steps,
+            trainer=trainer,
+            epochs_per_iter=cfg.model.marching.epochs_per_iter,
+            basic_symbols=basic_symbols,
+        )
+        marching_trainer.march_trainer()
+    else:
+        trainer.train()
 
 
 if __name__ == "__main__":

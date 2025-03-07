@@ -3,8 +3,8 @@ import os
 import hydra
 from hydra.utils import instantiate
 from omegaconf import DictConfig
-from examples.beltrami_flow.problem import beltrami_flow
 
+from examples.beltrami_flow.problem import beltrami_flow
 from multipinn import *
 from multipinn.utils import (
     initialize_model,

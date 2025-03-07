@@ -4,7 +4,9 @@ import hydra
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 
-from examples.poisson_3D_pipe.problem import poisson_3D_pipe
+from examples.navier_stokes_2D_obstacle_gradual_learning.problem import (
+    navier_stokes_equation_with_obstacle,
+)
 from multipinn import *
 from multipinn.utils import (
     initialize_model,
@@ -19,7 +21,12 @@ def train(cfg: DictConfig):
     config_save_path = os.path.join(cfg.paths.save_dir, "used_config.yaml")
     save_config(cfg, config_save_path)
 
-    conditions, input_dim, output_dim = poisson_3D_pipe()
+    (
+        conditions,
+        input_dim,
+        output_dim,
+        _re_setter,
+    ) = navier_stokes_equation_with_obstacle(re=cfg.problem.re)
 
     set_device_and_seed(cfg.trainer.random_seed)
 
@@ -42,6 +49,8 @@ def train(cfg: DictConfig):
 
     scheduler = instantiate(cfg.scheduler, optimizer=optimizer)
 
+    grid = heatmap.Grid.from_pinn(pinn, cfg.visualization.grid_plot_points)
+
     callbacks = [
         progress.TqdmBar(
             "Epoch {epoch} lr={lr:.2e} Loss={loss_eq} Total={total_loss:.2e}"
@@ -51,12 +60,24 @@ def train(cfg: DictConfig):
     ]
 
     callbacks += [
-        LiveScatterPrediction(
+        points.LiveScatterPrediction(
             save_dir=cfg.paths.save_dir,
             period=cfg.visualization.save_period,
             save_mode=cfg.visualization.save_mode,
-            output_index=0,
+            output_index=i,
         )
+        for i in range(output_dim)
+    ]
+
+    callbacks += [
+        heatmap.HeatmapPrediction(
+            grid=grid,
+            period=cfg.visualization.save_period,
+            save_dir=cfg.paths.save_dir,
+            save_mode=cfg.visualization.save_mode,
+            output_index=i,
+        )
+        for i in range(output_dim)
     ]
 
     trainer = Trainer(
@@ -69,7 +90,15 @@ def train(cfg: DictConfig):
         callbacks_organizer=CallbacksOrganizer(callbacks),
     )
 
-    trainer.train()
+    trainer_gradual = GradualTrainer(
+        trainer=trainer,
+        param_setter=_re_setter,
+        list_of_params=list(range(10, 101, 3)),
+        g_l_schedule=list(range(5000, 100001, 5000))
+        + list(range(110000, 210001, 10000)),
+    )
+
+    trainer_gradual.train()
 
 
 if __name__ == "__main__":

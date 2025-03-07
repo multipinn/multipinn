@@ -3,8 +3,8 @@ import os
 import hydra
 from hydra.utils import instantiate
 from omegaconf import DictConfig
-from examples.poisson_3D.problem import poisson_3D
 
+from examples.poisson_3D.problem import poisson_3D
 from multipinn import *
 from multipinn.utils import (
     initialize_model,

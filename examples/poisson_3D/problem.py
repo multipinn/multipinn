@@ -34,7 +34,11 @@ def poisson_3D():
         cos_pix = torch.cos(torch.pi * x)
         two_z_2 = torch.square(2 + z)
         numerator = torch.exp(2 * y) * (
-                (4 * (cos_pix - 1) - torch.square(torch.tensor(torch.pi)) * cos_pix) * two_z_2 + 2 * cos_pix - 2)
+            (4 * (cos_pix - 1) - torch.square(torch.tensor(torch.pi)) * cos_pix)
+            * two_z_2
+            + 2 * cos_pix
+            - 2
+        )
         denominator = 11 * (2 + z) * two_z_2
         eq1 = u_xx + u_yy + u_zz - (numerator / denominator)
         return [eq1]
@@ -77,12 +81,13 @@ def poisson_3D():
     z_0 = Hypercube(low=[-1, -1, -1], high=[1, 1, -1])
     z_1 = Hypercube(low=[-1, -1, 1], high=[1, 1, 1])
 
-    pde = [Condition(inner, domain),
-           Condition(bc_x0, x_0),
-           Condition(bc_x1, x_1),
-           Condition(bc_y0, y_0),
-           Condition(bc_y1, y_1),
-           Condition(bc_z0, z_0),
-           Condition(bc_z1, z_1)
-           ]
+    pde = [
+        Condition(inner, domain),
+        Condition(bc_x0, x_0),
+        Condition(bc_x1, x_1),
+        Condition(bc_y0, y_0),
+        Condition(bc_y1, y_1),
+        Condition(bc_z0, z_0),
+        Condition(bc_z1, z_1),
+    ]
     return pde, input_dim, output_dim

@@ -16,7 +16,7 @@ def navier_stokes_3D_pipe(re=60):
         return f, u, v, w, p, x, y, z
 
     def inner(model, arg):
-        f, u, v, w, p, x, y, z = basic_symbols(model, arg) 
+        f, u, v, w, p, x, y, z = basic_symbols(model, arg)
 
         u_x, u_y, u_z = unpack(grad(u, arg))
         v_x, v_y, v_z = unpack(grad(v, arg))
@@ -43,7 +43,6 @@ def navier_stokes_3D_pipe(re=60):
         eq2 = u * v_x + v * v_y + w * v_z + p_y - iRe * laplace_v
         eq3 = u * w_x + v * w_y + w * w_z + p_z - iRe * laplace_w
         eq4 = u_x + v_y + w_z
-
         return [eq1, eq2, eq3, eq4]
 
     def input_cond(model, arg):
@@ -51,14 +50,19 @@ def navier_stokes_3D_pipe(re=60):
 
         inlet_speed = 2.0
 
-        u_f = inlet_speed / (0.25 * 0.25) * (0.25 - (z - 0.5) ** 2) * (0.25 - (y - 0.5) ** 2) / 0.89031168
+        u_f = (
+            inlet_speed
+            / (0.25 * 0.25)
+            * (0.25 - (z - 0.5) ** 2)
+            * (0.25 - (y - 0.5) ** 2)
+            / 0.89031168
+        )
         u_f = torch.nn.functional.relu(u_f)
 
         return [(u - u_f), v, w]
 
     def output_cond(model, arg):
         f, u, v, w, p, x, y, z = basic_symbols(model, arg)
-
         return [p]
 
     def walls(model, arg):

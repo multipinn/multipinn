@@ -29,10 +29,11 @@ def train(cfg: DictConfig):
     calc_loss = initialize_regularization(cfg)
 
     AdaptiveGeneratorRectRAR_G(
-        cfg.generator.bound_points, 
+        cfg.generator.bound_points,
         add_points=50,
         n_points_up_bnd=6000,
-        density_rec_points_num=800).use_for(conditions)
+        density_rec_points_num=800,
+    ).use_for(conditions)
 
     AdaptiveGeneratorRectRAR_D(
         cfg.generator.domain_points,
@@ -40,7 +41,8 @@ def train(cfg: DictConfig):
         add_coeff=0,
         add_points=20000,
         n_points_up_bnd=300000,
-        density_rec_points_num=21000).use_for(conditions[0])
+        density_rec_points_num=21000,
+    ).use_for(conditions[0])
 
     pinn = PINN(model=model, conditions=conditions)
 

@@ -3,8 +3,8 @@ import os
 import hydra
 from hydra.utils import instantiate
 from omegaconf import DictConfig
-from examples.navier_stokes_3D_pipe.problem import navier_stokes_3D_pipe
 
+from examples.navier_stokes_3D_pipe.problem import navier_stokes_3D_pipe
 from multipinn import *
 from multipinn.utils import (
     initialize_model,

@@ -34,7 +34,11 @@ def poisson_3D_pipe():
         cos_pix = torch.cos(torch.pi * x)
         two_z_2 = torch.square(2 + z)
         numerator = torch.exp(2 * y) * (
-                (4 * (cos_pix - 1) - torch.square(torch.tensor(torch.pi)) * cos_pix) * two_z_2 + 2 * cos_pix - 2)
+            (4 * (cos_pix - 1) - torch.square(torch.tensor(torch.pi)) * cos_pix)
+            * two_z_2
+            + 2 * cos_pix
+            - 2
+        )
         denominator = 11 * (2 + z) * two_z_2
         eq1 = u_xx + u_yy + u_zz - (numerator / denominator)
         return [eq1]
@@ -51,7 +55,8 @@ def poisson_3D_pipe():
 
     my_walls = Shell(domain)
 
-    pde = [Condition(inner, domain),
-           Condition(walls, my_walls),
-           ]
+    pde = [
+        Condition(inner, domain),
+        Condition(walls, my_walls),
+    ]
     return pde, input_dim, output_dim
