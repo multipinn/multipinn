@@ -1,3 +1,4 @@
+from .convolutional_neural_network import CNN as CNN
 from .dense_net import DenseNet
 from .feedforward_neural_network import FNN, XavierFNN
 from .fourier_features import FourierFeatureNetwork
