@@ -4,7 +4,7 @@ import hydra
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 
-from examples.poisson_3D.problem import poisson_3D
+from examples.poisson_3D_pipe.problem import poisson_3D_pipe
 from multipinn import *
 from multipinn.utils import (
     initialize_model,
@@ -19,7 +19,7 @@ def train(cfg: DictConfig):
     config_save_path = os.path.join(cfg.paths.save_dir, "used_config.yaml")
     save_config(cfg, config_save_path)
 
-    conditions, input_dim, output_dim = poisson_3D()
+    conditions, input_dim, output_dim = poisson_3D_pipe()
 
     set_device_and_seed(cfg.trainer.random_seed)
 

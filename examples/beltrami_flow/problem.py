@@ -4,10 +4,26 @@ from multipinn.condition import *
 from multipinn.geometry import *
 
 
-def navier_stokes_3D_pipe(re=60):
+def beltrami_flow(re=60):
     input_dim = 3
     output_dim = 4
     iRe = 1 / re
+
+    def solution(x, y, z):
+        return [
+            -(torch.exp(x) * torch.sin(y + z) + torch.exp(z) * torch.cos(x + y)),
+            -(torch.exp(y) * torch.sin(z + x) + torch.exp(x) * torch.cos(y + z)),
+            -(torch.exp(z) * torch.sin(x + y) + torch.exp(y) * torch.cos(x + z)),
+            -0.5
+            * (
+                torch.exp(2 * x)
+                + torch.exp(2 * y)
+                + torch.exp(2 * z)
+                + 2 * torch.sin(x + y) * torch.cos(x + z) * torch.exp(y + z)
+                + 2 * torch.sin(y + z) * torch.cos(x + y) * torch.exp(x + z)
+                + 2 * torch.sin(x + z) * torch.cos(y + z) * torch.exp(x + y)
+            ),
+        ]
 
     def basic_symbols(model, arg):
         f = model(arg)
@@ -43,50 +59,37 @@ def navier_stokes_3D_pipe(re=60):
         eq2 = u * v_x + v * v_y + w * v_z + p_y - iRe * laplace_v
         eq3 = u * w_x + v * w_y + w * w_z + p_z - iRe * laplace_w
         eq4 = u_x + v_y + w_z
+
         return [eq1, eq2, eq3, eq4]
 
-    def input_cond(model, arg):
+    def lamb(model, arg):
         f, u, v, w, p, x, y, z = basic_symbols(model, arg)
-
-        inlet_speed = 2.0
-
-        u_f = (
-            inlet_speed
-            / (0.25 * 0.25)
-            * (0.25 - (z - 0.5) ** 2)
-            * (0.25 - (y - 0.5) ** 2)
-            / 0.89031168
-        )
-        u_f = torch.nn.functional.relu(u_f)
-
-        return [(u - u_f), v, w]
-
-    def output_cond(model, arg):
-        f, u, v, w, p, x, y, z = basic_symbols(model, arg)
-        return [p]
+        u_x, u_y, u_z = unpack(grad(u, arg))
+        v_x, v_y, v_z = unpack(grad(v, arg))
+        w_x, w_y, w_z = unpack(grad(w, arg))
+        p_x, p_y, p_z = unpack(grad(p, arg))
+        w1 = w_y - v_z
+        w2 = u_z = w_x
+        w3 = v_x - u_y
+        return [v * w3 - w * w2, w * w1 - u * w3, u * w2 - v * w1]
 
     def walls(model, arg):
         f, u, v, w, p, x, y, z = basic_symbols(model, arg)
-        return [u, v, w]
+        return [
+            u - solution(x, y, z)[0],
+            v - solution(x, y, z)[1],
+            w - solution(x, y, z)[2],
+            p - solution(x, y, z)[3],
+        ]
 
-    inlet = Hypercube([0.0, 0.0, 0.0], [4.0, 1.0, 1.0])
-    middle = Hypercube([4.0, 0.0, 0.0], [5.0, 3.0, 1.0])
-    outlet = Hypercube([5.0, 2.0, 0.0], [9.0, 3.0, 1.0])
-    domain = inlet | middle | outlet
-
-    inp = Hypercube([0.0, 0.0, 0.0], [0.0, 1.0, 1.0])
-    output = Hypercube([9.0, 2.0, 0.0], [9.0, 3.0, 1.0])
+    domain = Hypercube([-1.0, -1.0, -1.0], [1.0, 1.0, 1.0])
 
     shell = Shell(domain)
-    wall = shell - (inp | output)
-    input_wall = shell & inp
-    output_wall = shell & output
 
     pde = [
         Condition(inner, domain),
-        Condition(input_cond, input_wall),
-        Condition(output_cond, output_wall),
-        Condition(walls, wall),
+        Condition(lamb, domain),
+        Condition(walls, shell),
     ]
 
     return pde, input_dim, output_dim

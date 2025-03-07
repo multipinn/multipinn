@@ -4,7 +4,7 @@ import hydra
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 
-from examples.poisson_3D.problem import poisson_3D
+from examples.navier_stokes_3D_pipe.problem import navier_stokes_3D_pipe
 from multipinn import *
 from multipinn.utils import (
     initialize_model,
@@ -14,21 +14,16 @@ from multipinn.utils import (
 )
 
 
-def count_parameters(model):
-    return sum(p.numel() for p in model.parameters() if p.requires_grad)
-
-
 @hydra.main(config_path="configs", config_name="config", version_base=None)
 def train(cfg: DictConfig):
     config_save_path = os.path.join(cfg.paths.save_dir, "used_config.yaml")
     save_config(cfg, config_save_path)
 
-    conditions, input_dim, output_dim = poisson_3D()
+    conditions, input_dim, output_dim = navier_stokes_3D_pipe(re=cfg.problem.re)
 
     set_device_and_seed(cfg.trainer.random_seed)
 
     model = initialize_model(cfg, input_dim, output_dim)
-
     calc_loss = initialize_regularization(cfg)
 
     generator_domain = Generator(
@@ -43,20 +38,15 @@ def train(cfg: DictConfig):
 
     pinn = PINN(model=model, conditions=conditions)
 
-    print(model)
-    num_params = count_parameters(model)
-    print(f"Количество обучаемых параметров: {num_params}")
-
     optimizer = instantiate(cfg.optimizer, params=model.parameters())
+
     scheduler = instantiate(cfg.scheduler, optimizer=optimizer)
 
     callbacks = [
         progress.TqdmBar(
             "Epoch {epoch} lr={lr:.2e} Loss={loss_eq} Total={total_loss:.2e}"
         ),
-        curve.LossCurve(
-            cfg.paths.save_dir, cfg.visualization.save_period, save_mode="png"
-        ),
+        curve.LossCurve(cfg.paths.save_dir, cfg.visualization.save_period),
         save.SaveModel(cfg.paths.save_dir, period=cfg.visualization.save_period),
     ]
 
@@ -67,7 +57,7 @@ def train(cfg: DictConfig):
             save_mode=cfg.visualization.save_mode,
             output_index=i,
         )
-        for i in range(output_dim)
+        for i in range(3)
     ]
 
     trainer = Trainer(

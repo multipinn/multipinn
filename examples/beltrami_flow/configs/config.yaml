@@ -1,5 +1,5 @@
 problem:
-  name: "navier_stokes_3D_pipe"
+  name: "beltrami_flow"
   re: 100
 
 model:
@@ -21,7 +21,7 @@ regularization_target:
 
 generator:
   domain_points: 10_000
-  bound_points: 2_000
+  bound_points: 1_000
   sampler: "pseudo"
 
 trainer:

@@ -1,11 +1,7 @@
-from __future__ import annotations
-
 from typing import Callable, List
 
 import torch
-import torch.distributed as dist
 
-from .PINN import PINN
 from .trainer import Trainer
 
 
