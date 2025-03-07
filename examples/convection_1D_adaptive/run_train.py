@@ -28,14 +28,14 @@ def train(cfg: DictConfig):
     model = initialize_model(cfg, input_dim, output_dim)
     calc_loss = initialize_regularization(cfg)
 
-    AdaptiveGeneratorRectRAR_G(
+    AdaptiveGeneratorRAR_G(
         cfg.generator.bound_points,
         add_points=50,
         n_points_up_bnd=6000,
         density_rec_points_num=800,
     ).use_for(conditions)
 
-    AdaptiveGeneratorRectRAR_D(
+    AdaptiveGeneratorRAR_D(
         cfg.generator.domain_points,
         power_coeff=1,
         add_coeff=0,

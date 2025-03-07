@@ -9,7 +9,7 @@ from ..condition import Condition
 from .generator import Generator
 
 
-class AdaptiveGeneratorRect(Generator):
+class AdaptiveGenerator(Generator):
     def __init__(
         self,
         n_points,
@@ -82,7 +82,7 @@ class AdaptiveGeneratorRect(Generator):
         return np.argpartition(error, points_num)[points_num:]
 
 
-class AdaptiveGeneratorRectRAR_D(AdaptiveGeneratorRect):
+class AdaptiveGeneratorRAR_D(AdaptiveGenerator):
     def __init__(
         self,
         n_points,
@@ -148,7 +148,7 @@ class AdaptiveGeneratorRectRAR_D(AdaptiveGeneratorRect):
         return points
 
 
-class AdaptiveGeneratorRectRAR_G(AdaptiveGeneratorRect):
+class AdaptiveGeneratorRAR_G(AdaptiveGenerator):
     def __init__(
         self,
         n_points,
@@ -206,7 +206,7 @@ class AdaptiveGeneratorRectRAR_G(AdaptiveGeneratorRect):
         return points
 
 
-class AdaptiveGeneratorRectRAD(AdaptiveGeneratorRect):
+class AdaptiveGeneratorRAD(AdaptiveGenerator):
     def __init__(
         self,
         n_points,
@@ -246,7 +246,7 @@ class AdaptiveGeneratorRectRAD(AdaptiveGeneratorRect):
         return chosen_points
 
 
-class AdaptiveGeneratorRectRAG(AdaptiveGeneratorRect):
+class AdaptiveGeneratorRAG(AdaptiveGenerator):
     def __init__(
         self,
         n_points,
