@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 
 from multipinn.condition.condition import Condition
@@ -26,9 +27,13 @@ class MeshArea(Geometry):
             self.points.normals = torch.zeros(self.n_connections, self.n_dims)
 
         for i, connection in enumerate(face.connections):
-            self.points[i] = torch.tensor(connection.middle_point) / 50
+            self.points[i] = torch.tensor(connection.middle_point)
             if 0 in connection.cells:
                 self.points.normals[i] = torch.tensor(connection.normal)
+
+        bot = torch.min(self.points, dim=0).values.cpu().numpy()
+        top = torch.max(self.points, dim=0).values.cpu().numpy()
+        super().__init__(self.n_dims, (bot, top), np.linalg.norm(top - bot))
 
     def random_points(self, n, random="pseudo"):
         indices = torch.randperm(self.points.shape[0])[:n]
