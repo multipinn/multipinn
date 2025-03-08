@@ -47,8 +47,8 @@ class Generator:
             torch.Tensor: Generated points as a tensor with shape (n_points, dimension)
                 and gradients enabled.
         """
-        numpy_points = condition.geometry.random_points(self.n_points, self.sampler)
-        torch_points = torch.tensor(numpy_points, requires_grad=True)
+        points = condition.geometry.random_points(self.n_points, self.sampler)
+        torch_points = torch.as_tensor(points).requires_grad_()
         return torch_points
 
     def use_for(self, condition: Union[Condition, Iterable[Condition]]) -> None:
