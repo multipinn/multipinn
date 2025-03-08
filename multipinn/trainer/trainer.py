@@ -3,7 +3,7 @@ from typing import Callable, List, Union
 import torch
 import torch.distributed as dist
 
-from .PINN import PINN
+from multipinn.PINN import PINN
 
 
 class Trainer:

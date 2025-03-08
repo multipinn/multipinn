@@ -1,0 +1,47 @@
+problem:
+  name: "convection_1D"
+  betta: 30
+  t_max: 10
+
+model:
+  type: FNN
+  params:
+    hidden_layers: [128, 128, 128, 128]
+
+model_target:
+  _target_: multipinn.neural_network.${model.type}
+
+regularization:
+  type: Constant # Pointwise, Constant, Gradient, Normal, AdaptiveConditions, null
+  params:
+    lambdas: [1, 10, 10]
+
+regularization_target:
+  _target_: multipinn.regularization.${regularization.type}Losses
+
+generator:
+  domain_points: 40_000
+  bound_points: 5_000
+  sampler: "pseudo"
+
+trainer:
+  num_epochs: 300_000
+  grid_update: 100
+  random_seed: 42
+  calc_loss: "mean" # "mean", "legacy"
+
+visualization:
+  grid_plot_points: 20_000
+  save_period: 5000
+  save_mode: "png"
+
+scheduler:
+  _target_: torch.optim.lr_scheduler.ExponentialLR
+  gamma: 0.9997
+
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 0.005
+
+paths:
+  save_dir: ${hydra:runtime.cwd}/examples/${problem.name}/artifacts/${model.type}_${regularization.type}_betta_${problem.betta}_t_max_${problem.t_max}
