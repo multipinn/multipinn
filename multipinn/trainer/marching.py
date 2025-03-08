@@ -77,12 +77,6 @@ class MarchingTrainer:
 
         self.trainer.pinn.conditions[0].points = None
 
-        grid = heatmap.Grid.from_pinn(self.trainer.pinn, 20000)
-        self.heatmap_callback = heatmap.HeatmapPrediction(
-            grid=grid, period=1, save_dir=self.save_dir, save_mode="png"
-        )
-        self.heatmap_callback.mkdir()
-
     def reset_weights(self, model):
         def init_weights(m):
             if isinstance(m, (torch.nn.Linear, torch.nn.Conv2d)):
