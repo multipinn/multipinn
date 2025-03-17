@@ -1,0 +1,48 @@
+problem:
+  name: "gas_dynamics_1D"
+
+model:
+  type: FFNN
+  params:
+    hidden_layers: [64, 64, 64, 64]
+    sigma: 1.0
+    encoding_dim: 64
+
+model_target:
+  _target_: multipinn.neural_network.${model.type}
+
+regularization:
+  type: Constant # Pointwise, Constant, Gradient, Normal, null
+  params:
+    # ignored_indexes: [0]
+    lambdas: [1, 1, 1, 1, 1, 10]
+
+regularization_target:
+  _target_: multipinn.regularization.${regularization.type}Losses
+
+generator:
+  domain_points: 5_000
+  bound_points: 100
+  sampler: "pseudo"
+
+trainer:
+  num_epochs: 100_000
+  grid_update: 100
+  random_seed: 42
+  calc_loss: "mean" # "mean", "legacy"
+
+visualization:
+  grid_plot_points: 20_000
+  save_period: 1000
+  save_mode: "png"
+
+scheduler:
+  _target_: torch.optim.lr_scheduler.ExponentialLR
+  gamma: 0.9999
+
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 0.001
+
+paths:
+  save_dir: ${hydra:runtime.cwd}/examples/${problem.name}/artifacts/${model.type}_${regularization.type}
