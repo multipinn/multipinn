@@ -6,12 +6,13 @@ import meshio
 import numpy as np
 
 
-def navier_stokes_3D_pipe_with_data(re=60):
+def navier_stokes_3D_pipe_with_data(data_name, data_dir, re=60):
     input_dim = 3
     output_dim = 4
     iRe = 1 / re
 
-    data = meshio.read(f'./examples/navier_stokes_3D_pipe_with_data/data.vtk')
+    data = meshio.read(f'{data_dir}/{data_name}')
+    
 
     def basic_symbols(model, arg):
         f = model(arg)

@@ -19,7 +19,7 @@ def train(cfg: DictConfig):
     config_save_path = os.path.join(cfg.paths.save_dir, "used_config.yaml")
     save_config(cfg, config_save_path)
 
-    conditions, input_dim, output_dim = navier_stokes_3D_pipe_with_data(re=cfg.problem.re)
+    conditions, input_dim, output_dim = navier_stokes_3D_pipe_with_data(re=cfg.problem.re, data_dir=cfg.paths.data_dir, data_name=cfg.problem.data_name)  
 
     set_device_and_seed(cfg.trainer.random_seed)
 

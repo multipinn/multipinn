@@ -1,6 +1,7 @@
 problem:
   name: "navier_stokes_3D_pipe_with_data"
   re: 100
+  data_name: "data.vtk"
 
 model:
   type: FNN
@@ -45,3 +46,4 @@ optimizer:
 
 paths:
   save_dir: ${hydra:runtime.cwd}/examples/${problem.name}/artifacts/${model.type}_reg_${regularization.type}_loss_${trainer.calc_loss}
+  data_dir: ${hydra:runtime.cwd}/examples/${problem.name}
