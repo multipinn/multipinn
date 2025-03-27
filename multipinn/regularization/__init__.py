@@ -1,4 +1,4 @@
-from .adaptive import AdaptiveConditionsLosses
+from .adaptive import AdaptiveConditionsAndPointsLosses, AdaptiveConditionsLosses
 from .basic import BasicLosses
 from .constant import ConstantLosses
 from .gradient import GradientLosses
