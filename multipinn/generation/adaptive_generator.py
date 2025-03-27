@@ -46,15 +46,7 @@ class AdaptiveGenerator(Generator):
 
     def calc_error_field(self, geometry, condition: Condition, model):
         self.device = next(model.parameters()).device
-        density_points = torch.tensor(
-            np.random.uniform(
-                low=geometry.low,
-                high=geometry.high,
-                size=(self.density_rec_points_num, len(geometry.low)),
-            ),
-            dtype=torch.float32,
-            requires_grad=True,
-        )
+        density_points = torch.tensor(geometry.random_points(self.density_rec_points_num), dtype=torch.float32, requires_grad=True,)
         residuals = condition.get_residual_fn(model)(density_points)
         residual = torch.stack(residuals, dim=1).abs().sum(dim=1)
         error = residual.cpu().detach().numpy()
@@ -212,7 +204,7 @@ class AdaptiveGeneratorRAD(AdaptiveGenerator):
         n_points,
         power_coeff=3,
         add_coeff=1,
-        density_rec_points_num=None,
+        density_rec_points_num=10000,
     ):
         """RAD adaptive generator
 
@@ -252,7 +244,7 @@ class AdaptiveGeneratorRAG(AdaptiveGenerator):
         n_points,
         power_coeff=3,
         add_coeff=1,
-        density_rec_points_num=None,
+        density_rec_points_num=10000,
     ):
         """RAG adaptive generator
 
