@@ -75,6 +75,70 @@ def plot_3d_scatter(x: np.ndarray, y: np.ndarray, z: np.ndarray, style):
     return fig
 
 
+def plot_3d_scatter_with_inner_and_normal(x: np.ndarray, y: np.ndarray, z: np.ndarray, style,
+                                          x_inner: np.ndarray | None = None,
+                                          y_inner: np.ndarray | None = None,
+                                          z_inner: np.ndarray | None = None,
+                                          x_norm: np.ndarray | None = None,
+                                          y_norm: np.ndarray | None = None,
+                                          z_norm: np.ndarray | None = None):
+    """
+    Creates a plot, that shows domain boundary, inner points (if provided) and normals (if provided)
+    :param x: array of boundary points along the x-axis
+    :param y: array of boundary points along the y-axis
+    :param z: array of boundary points along the z-axis
+    :param style: dict containing style parameters for plotly plot
+    :param x_inner: array of inner points along the x-axis
+    :param y_inner: array of inner points along the y-axis
+    :param z_inner: array of inner points along the z-axis
+    :param x_norm: array of shape [N, 2] of normal starts and ends along the x-axis
+    :param y_norm: array of shape [N, 2] of normal starts and ends along the y-axis
+    :param z_norm: array of shape [N, 2] of normal starts and ends along the z-axis
+    """
+    fig = go.Figure(
+        go.Scatter3d(
+            x=x,
+            y=y,
+            z=z,
+            mode="markers",
+        )
+    )
+    default_style = {
+        "data_0_marker": dict(size=4, color="black"),
+        "data_0_showlegend": False,
+        "layout_autosize": True,
+        "layout_scene_aspectmode": "data",
+    }
+    
+    if all([x_inner is not None, y_inner is not None, z_inner is not None]):
+        fig.add_trace(
+            go.Scatter3d(
+                x=x_inner,
+                y=y_inner,
+                z=z_inner,
+                mode="markers",
+            )
+        )
+        default_style["data_1_marker"] = dict(size=4, color="red")
+        default_style["data_1_showlegend"] = False
+    if all([x_norm is not None, y_norm is not None, z_norm is not None]):
+        for x, y, z in zip(x_norm, y_norm, z_norm):
+            fig.add_trace(
+                go.Scatter3d(
+                    x=x,
+                    y=y,
+                    z=z,
+                    mode="lines",
+                    line=dict(color="green"),
+                    showlegend=False,
+                )
+            )
+
+    fig.update(**default_style)
+    fig.update(**style)
+    return fig
+
+
 def slider_surface_3d(
     x: np.ndarray,
     y: np.ndarray,
