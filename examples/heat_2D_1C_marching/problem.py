@@ -14,6 +14,27 @@ def problem_2D1C_heat_equation(a=1, b=0.5, alpha=0.5, beta=10, gamma=0.7):
             a * torch.cos(alpha * args[:, 0]) + b * torch.sin(beta * args[:, 0])
         )
 
+    def divide(conditions, step, next_step, first_iter, previous_model):
+        def ic_new(model, arg):
+            _, u, _, _ = basic_symbols(model, arg)
+            _, u_prev, _, _ = basic_symbols(previous_model, arg)
+            return [u - u_prev]
+
+        new_domain = Hypercube(low=[0, step], high=[2, next_step])
+        x_min = Hypercube(low=[0, step], high=[0, next_step])
+        x_max = Hypercube(low=[2, step], high=[2, next_step])
+        t_min = Hypercube(low=[0, step], high=[2, step])
+
+        conditions[0].geometry = new_domain
+        conditions[1].geometry = x_min
+        conditions[2].geometry = x_max
+        conditions[3].geometry = t_min
+
+        if not first_iter:
+            conditions[3].function = ic_new
+
+        conditions[0].points = None
+
     def basic_symbols(model, arg):
         f = model(arg)
         (u,) = unpack(f)
@@ -69,4 +90,4 @@ def problem_2D1C_heat_equation(a=1, b=0.5, alpha=0.5, beta=10, gamma=0.7):
         Condition(bc2, x_max),
         Condition(ic, t_0),
     ]
-    return pde, input_dim, output_dim, basic_symbols
+    return pde, input_dim, output_dim, divide

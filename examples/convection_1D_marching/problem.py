@@ -36,6 +36,25 @@ def convection_problem(betta=1.0, t_max=1.0, x_max=torch.pi * 2):
         x, t = unpack(arg)
         return f, u, x, t
 
+    def divide(conditions, step, next_step, first_iter, previous_model):
+        def ic_new(model, arg):
+            _, u, _, _ = basic_symbols(model, arg)
+            _, u_prev, _, _ = basic_symbols(previous_model, arg)
+            return [u - u_prev]
+
+        new_domain = Hypercube(low=[step, 0], high=[next_step, torch.pi * 2])
+        x_min = Hypercube(low=[step, 0], high=[next_step, 0])
+        t_min = Hypercube(low=[step, 0], high=[step, torch.pi * 2])
+
+        conditions[0].geometry = new_domain
+        conditions[1].geometry = x_min
+        conditions[2].geometry = t_min
+
+        if not first_iter:
+            conditions[2].function = ic_new
+
+        conditions[0].points = None
+
     domain = Hypercube(low=[0, 0], high=[t_max, x_max])
     x_portal = Hypercube(low=[0, 0], high=[t_max, 0])
     t_min = Hypercube(low=[0, 0], high=[0, x_max])
@@ -44,4 +63,4 @@ def convection_problem(betta=1.0, t_max=1.0, x_max=torch.pi * 2):
         Condition(portal, x_portal),
         Condition(ic, t_min),
     ]
-    return pde, symbols.input_dim, symbols.output_dim, basic_symbols
+    return pde, symbols.input_dim, symbols.output_dim, divide

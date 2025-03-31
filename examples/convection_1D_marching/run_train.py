@@ -19,7 +19,7 @@ def train(cfg: DictConfig):
     config_save_path = os.path.join(cfg.paths.save_dir, "used_config.yaml")
     save_config(cfg, config_save_path)
 
-    conditions, input_dim, output_dim, basic_symbols = convection_problem(
+    conditions, input_dim, output_dim, divide = convection_problem(
         cfg.problem.betta, cfg.problem.t_max
     )
 
@@ -28,19 +28,13 @@ def train(cfg: DictConfig):
     model = initialize_model(cfg, input_dim, output_dim)
     calc_loss = initialize_regularization(cfg)
 
-    if cfg.model.marching.use == True:
-        type_gen = "pseudo"
+    type_gen = "pseudo"
 
-        generator_bound = Generator(cfg.generator.bound_points, type_gen)
-        generator_domain = Generator(cfg.generator.domain_points, type_gen)
+    generator_bound = Generator(cfg.generator.bound_points, type_gen)
+    generator_domain = Generator(cfg.generator.domain_points, type_gen)
 
-        generator_bound.use_for(conditions)
-        generator_domain.use_for(conditions[0])
-    else:
-        Generator(cfg.generator.bound_points, "pseudo").use_for(conditions)
-        GradBasedGenerator(cfg.generator.domain_points, "pseudo", 10).use_for(
-            conditions[0]
-        )
+    generator_bound.use_for(conditions)
+    generator_domain.use_for(conditions[0])
 
     pinn = PINN(model=model, conditions=conditions)
 
@@ -56,11 +50,11 @@ def train(cfg: DictConfig):
         ),
         curve.LossCurve(cfg.paths.save_dir, cfg.visualization.save_period),
         save.SaveModel(cfg.paths.save_dir, period=cfg.visualization.save_period),
-        heatmap.HeatmapPrediction(
+        heatmap.HeatmapPredictionMarching(
             grid=grid,
-            period=cfg.visualization.save_period,
             save_dir=cfg.paths.save_dir,
             save_mode=cfg.visualization.save_mode,
+            epochs_per_iter=cfg.model.marching.epochs_per_iter,
         ),
     ]
 
@@ -83,17 +77,13 @@ def train(cfg: DictConfig):
         callbacks_organizer=CallbacksOrganizer(callbacks),
     )
 
-    if cfg.model.marching.use == True:
-        marching_trainer = MarchingTrainer(
-            save_dir=cfg.paths.save_dir,
-            steps=cfg.model.marching.steps,
-            trainer=trainer,
-            epochs_per_iter=cfg.model.marching.epochs_per_iter,
-            basic_symbols=basic_symbols,
-        )
-        marching_trainer.march_trainer()
-    else:
-        trainer.train()
+    marching_trainer = MarchingTrainer(
+        steps=cfg.model.marching.steps,
+        trainer=trainer,
+        epochs_per_iter=cfg.model.marching.epochs_per_iter,
+        divide=divide,
+    )
+    marching_trainer.march_trainer()
 
 
 if __name__ == "__main__":
