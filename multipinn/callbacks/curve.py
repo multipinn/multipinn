@@ -366,6 +366,65 @@ class ErrorCurve(BaseCallback, BasicCurve):
             )
 
 
+class RelativeErrorCurve(BaseCallback, BasicCurve):
+    """
+    Callback for relative error plot creating. Using condition[0].points.
+    full_solution() must return all outputs! See line:
+    assert len(exact.shape) == 2
+    """
+
+    def __init__(
+        self,
+        save_dir: str,
+        period: int,
+        full_solution: Callable[[torch.Tensor], torch.Tensor],
+        save_mode: Literal["html", "png", "pt", "show"] = "html",
+        style: dict = None,
+    ):
+        style = style if style is not None else {}
+        default_style = {
+            "layout_yaxis_type": "log",
+            "layout_title": "Error",
+            "layout_xaxis_title": "Epoch",
+            "layout_yaxis_title": "Error",
+        }
+        BasicCurve.__init__(
+            self,
+            save_dir + "/error_curves",
+            period,
+            "relative_error_curve",
+            save_mode=save_mode,
+            style=default_style | style,
+        )
+        self.solution = full_solution
+
+    def __call__(self, trainer: Trainer):
+        error = []
+        points = trainer.pinn.conditions[0].points
+
+        predicted = trainer.pinn.model(points)
+        exact = self.solution(points)
+        error = (
+            (torch.linalg.norm(predicted - exact) / torch.linalg.norm(exact).view(1))
+            .detach()
+            .cpu()
+        )
+
+        self.metric_history.append(error)
+
+        if trainer.current_epoch == 0:
+            for out in range(predicted.shape[1]):
+                self.curve_names.append(f"Output {out}")
+        elif trainer.current_epoch % self.period == 0:
+            error_tensor = torch.stack(self.metric_history, dim=1)
+            BasicCurve.draw(
+                self,
+                error_tensor,
+                self.curve_names,
+                np.arange(trainer.current_epoch + 1),
+            )
+
+
 class MeshErrorCurve(BaseCallback, BasicCurve):
     """A callback that creates and plots error curves during training using predefined mesh points.
 

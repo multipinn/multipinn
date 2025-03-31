@@ -14,6 +14,14 @@ from multipinn.utils import (
 )
 
 
+def solution(points: torch.Tensor):
+    x, y, z = points[:, 0], points[:, 1], points[:, 2]
+    cos_pix = torch.cos(torch.pi * x)
+    numerator = (cos_pix - 1) * torch.exp(2 * y)
+    denominator = 11 * (2 + z)
+    return (numerator / denominator).reshape(-1, 1)
+
+
 @hydra.main(config_path="configs", config_name="config", version_base=None)
 def train(cfg: DictConfig):
     config_save_path = os.path.join(cfg.paths.save_dir, "used_config.yaml")
@@ -48,6 +56,11 @@ def train(cfg: DictConfig):
         ),
         curve.LossCurve(cfg.paths.save_dir, cfg.visualization.save_period),
         save.SaveModel(cfg.paths.save_dir, period=cfg.visualization.save_period),
+        curve.RelativeErrorCurve(
+            cfg.paths.save_dir,
+            period=cfg.visualization.save_period,
+            full_solution=solution,
+        ),
     ]
 
     callbacks += [
