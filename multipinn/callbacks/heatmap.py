@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import gc
-from typing import Callable, Literal, Union
+from typing import Callable, List, Literal, Union
 
 import numpy as np
 import plotly.graph_objects as go
@@ -344,3 +344,45 @@ class PlotHeatmapLoss(PlotHeatmapResidual):
                 plot_name="Loss",
                 file_name=f"{trainer.current_epoch}_heatmap_loss_{self.condition_index}.{self.equation_index}",
             )
+
+
+class HeatmapPredictionMarching(BaseCallback, BaseHeatmap):
+    def __init__(
+        self,
+        save_dir: str,
+        epochs_per_iter: List,
+        grid: Grid,
+        save_mode: Literal["html", "png", "pt", "show"] = "png",
+        output_index: int = 0,
+        style: dict = None,
+    ):
+        BaseHeatmap.__init__(
+            self,
+            grid,
+            save_dir + "/heatmap_prediction_marching_plots",
+            period=epochs_per_iter[0],
+            save_mode=save_mode,
+            output_index=output_index,
+            style=style,
+        )
+        self.counter_iters = 1
+        self.epochs_per_iter = epochs_per_iter
+        self.coords = []
+        self.predictions = []
+
+    def __call__(self, trainer: Trainer):
+        if trainer.current_epoch == self.epochs_per_iter[self.counter_iters - 1]:
+            grid = Grid.from_pinn(trainer.pinn, 20000)
+            self.coords.append(grid.coord)
+
+            predicted_values = trainer.pinn.model(grid.points)[:, self.output_index]
+            self.predictions.append(predicted_values)
+            self.grid.coord = np.concatenate(self.coords, axis=1)
+
+            super().draw(
+                torch.cat(self.predictions, dim=0).cpu().numpy(),
+                "Prediction",
+                f"{trainer.current_epoch}_heatmap_prediction_marching_{self.output_index}",
+            )
+
+            self.counter_iters += 1
