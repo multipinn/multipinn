@@ -6,6 +6,7 @@ from .curve import (
     LearningRateCurve,
     LossCurve,
     MeshErrorCurve,
+    RelativeErrorCurve,
 )
 from .grid import Grid, GridWithGrad
 from .heatmap import (
