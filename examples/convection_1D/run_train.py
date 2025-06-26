@@ -46,22 +46,22 @@ def train(cfg: DictConfig):
         ),
         curve.LossCurve(cfg.paths.save_dir, cfg.visualization.save_period),
         save.SaveModel(cfg.paths.save_dir, period=cfg.visualization.save_period),
-        heatmap.HeatmapPrediction(
-            grid=grid,
-            period=cfg.visualization.save_period,
-            save_dir=cfg.paths.save_dir,
-            save_mode=cfg.visualization.save_mode,
-        ),
+        # heatmap.HeatmapPrediction(
+        #     grid=grid,
+        #     period=cfg.visualization.save_period,
+        #     save_dir=cfg.paths.save_dir,
+        #     save_mode=cfg.visualization.save_mode,
+        # ),
     ]
 
-    callbacks += [
-        points.LiveScatterPrediction(
-            save_dir=cfg.paths.save_dir,
-            period=cfg.visualization.save_period,
-            save_mode=cfg.visualization.save_mode,
-            output_index=0,
-        )
-    ]
+    # callbacks += [
+    #     points.LiveScatterPrediction(
+    #         save_dir=cfg.paths.save_dir,
+    #         period=cfg.visualization.save_period,
+    #         save_mode=cfg.visualization.save_mode,
+    #         output_index=0,
+    #     )
+    # ]
 
     trainer = Trainer(
         pinn=pinn,

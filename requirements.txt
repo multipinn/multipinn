@@ -2,7 +2,7 @@ torch
 tqdm==4.65.0
 scipy==1.10.1
 scikit-learn
-plotly==5.15.0
+plotly
 matplotlib==3.7.1
 meshio==5.3.4
 hydra-core

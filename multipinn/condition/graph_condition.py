@@ -130,8 +130,10 @@ class GraphCondition(Condition):
         -----
         This method sets the output_len attribute of the condition object.
         """
+        # Get device from model parameters
+        device = next(model.parameters()).device
         arg_point = (
-            torch.Tensor(self.geometry.bbox[0]) + torch.Tensor(self.geometry.bbox[1])
+            torch.tensor(self.geometry.bbox[0], device=device) + torch.tensor(self.geometry.bbox[1], device=device)
         ) * 0.5
-        nodes = arg_point.repeat(3, 1) * torch.rand(3, 1).requires_grad_()
+        nodes = arg_point.repeat(3, 1) * torch.rand(3, 1, device=device).requires_grad_()
         self.output_len = len(self.get_residual_fn(model)(nodes))

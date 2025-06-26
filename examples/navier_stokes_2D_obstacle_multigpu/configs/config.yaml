@@ -1,5 +1,5 @@
 problem:
-  name: "navier_stokes_2D_obstacle"
+  name: "navier_stokes_2D_obstacle_multigpu"
   re: 50
 
 model:
@@ -29,6 +29,7 @@ trainer:
   grid_update: null
   random_seed: 42
   calc_loss: "mean" # "mean", "legacy"
+  mixed_training: false  # Can be enabled for additional speedup with compatible hardware
 
 visualization:
   grid_plot_points: 20_000
@@ -44,4 +45,4 @@ optimizer:
   lr: 0.001
 
 paths:
-  save_dir: ${hydra:runtime.cwd}/examples/${problem.name}/artifacts/${model.type}_reg_${regularization.type}_loss_${trainer.calc_loss}_re_${problem.re}
+  save_dir: ${hydra:runtime.cwd}/examples/${problem.name}/artifacts/${model.type}_reg_${regularization.type}_loss_${trainer.calc_loss}_re_${problem.re}_multigpu 

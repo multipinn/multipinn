@@ -105,8 +105,10 @@ class Condition:
         Args:
             model (torch.nn.Module): Current model state
         """
+        # Get device from model parameters
+        device = next(model.parameters()).device
         arg_point = (
-            torch.Tensor(self.geometry.bbox[0]) + torch.Tensor(self.geometry.bbox[1])
+            torch.tensor(self.geometry.bbox[0], device=device) + torch.tensor(self.geometry.bbox[1], device=device)
         ) * 0.5  # center
         arg_point = arg_point.reshape(1, -1).requires_grad_()
         self.output_len = len(self.get_residual_fn(model)(arg_point))
@@ -163,7 +165,8 @@ class ConditionExtra(Condition):
             Callable: Function that computes normal vectors for given points
         """
         return lambda points: torch.tensor(
-            geometry.boundary_normal(points.detach().cpu().numpy())
+            geometry.boundary_normal(points.detach().cpu().numpy()),
+            device=points.device
         )
 
     def update_points(self, model=None) -> None:
