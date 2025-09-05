@@ -5,7 +5,7 @@ import torch
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 
-from examples.Surfaces.problem import sphere
+from examples.surfaces_elliptic_adaptive.problem import sphere
 from multipinn import *
 from multipinn.utils import (
     initialize_model,

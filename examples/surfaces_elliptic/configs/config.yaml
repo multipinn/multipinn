@@ -1,5 +1,5 @@
 problem:
-  name: "surfaces_adaptive"
+  name: "surfaces_elliptic"
 
 model:
   type: FNN
@@ -20,6 +20,7 @@ regularization_target:
 
 generator:
   domain_points: 200_000
+  sampler: 'pseudo'
 
 trainer:
   num_epochs: 100_000
