@@ -69,7 +69,7 @@ class Trainer:
         for cond in self.pinn.conditions:
             cond.set_batching(self.num_batches)
         if self.mixed_training:
-            self.scaler = torch.cuda.amp.GradScaler(enabled=True)
+            self.scaler = torch.amp.GradScaler('cuda', enabled=True)
 
     def train(self):
         """Execute the main training loop.
@@ -128,13 +128,27 @@ class Trainer:
         Finally updates model parameters using accumulated gradients.
         """
         self.optimizer.zero_grad()  # out of the loop to accumulate gradients
+            
         for self.current_batch in range(self.num_batches):
             self.pinn.select_batch(self.current_batch)
-            batch_loss, losses = self.calc_loss(self)
-            batch_loss.backward()
+            
+            if self.mixed_training:
+                with torch.amp.autocast('cuda'):
+                    batch_loss, losses = self.calc_loss(self)
+                self.scaler.scale(batch_loss).backward()
+            else:
+                batch_loss, losses = self.calc_loss(self)
+                batch_loss.backward()
+                
             self.epoch_loss_detailed += losses.detach()
             self.total_loss += batch_loss.detach()
-        self.optimizer.step()  # out of the loop to accumulate gradients
+            
+        if self.mixed_training:
+            self.scaler.step(self.optimizer)
+            self.scaler.update()
+        else:
+            self.optimizer.step()
+            
         self.epoch_loss_detailed *= self.inum_batches
         self.total_loss *= self.inum_batches
 
@@ -203,37 +217,71 @@ class TrainerMultiGPU(Trainer):
         assert dist.get_world_size() == num_batches
 
     def _train_batches(self):
-        """Process batches in distributed training mode.
-
-        Each GPU processes its assigned batch, then gradients are synchronized
-        across all devices before parameter updates.
-        """
+        """Process batches in distributed training mode."""
         self.optimizer.zero_grad()
-
         self.pinn.select_batch(self.rank)
-        batch_loss, losses = self.calc_loss(self)
-        batch_loss.backward()
+        
+        if self.mixed_training:
+            with torch.amp.autocast('cuda'):
+                batch_loss, losses = self.calc_loss(self)
+            self.scaler.scale(batch_loss).backward()
+            self.reduce_gradients()
+            self.scaler.step(self.optimizer)
+            self.scaler.update()
+        else:
+            batch_loss, losses = self.calc_loss(self)
+            batch_loss.backward()
+            self.reduce_gradients()
+            self.optimizer.step()
+        
         self.epoch_loss_detailed += losses.detach()
         self.total_loss += batch_loss.detach()
-
-        self.reduce_gradients()
-        self.optimizer.step()
+        
+        self.reduce_metrics()
 
     def reduce_gradients(self):
-        """Synchronize gradients across all GPUs.
-
-        Performs all-reduce operation to average gradients across all processes
-        in the distributed training setup.
-        """
+        """Synchronize gradients across all GPUs."""
+        if self.mixed_training:
+            self.scaler.unscale_(self.optimizer)
+        
         size = float(dist.get_world_size())
-        # t0 = clock()
-        # s = 0
         for param in self.pinn.model.parameters():
-            # s += param.grad.data.nelement() * param.grad.data.element_size()
-            dist.all_reduce(param.grad.data, op=dist.ReduceOp.SUM)
-            param.grad.data /= size
-        # t1 = clock()
-        # print(f'{os.environ["RANK"]}: reducing {s} bytes in {i+1} calls took {t1-t0:.3f} sec')
+            if param.grad is not None:
+                dist.all_reduce(param.grad.data, op=dist.ReduceOp.SUM)
+                param.grad.data /= size
+
+    def reduce_metrics(self):
+        """Synchronize metrics across all GPUs."""
+        dist.all_reduce(self.total_loss, op=dist.ReduceOp.SUM)
+        dist.all_reduce(self.epoch_loss_detailed, op=dist.ReduceOp.SUM)
+        self.total_loss /= dist.get_world_size()
+        self.epoch_loss_detailed /= dist.get_world_size()
+
+    def train(self):
+        """Execute the main training loop.
+
+        Runs the training process for the specified number of epochs. For each epoch:
+        1. Performs training step
+        2. Updates learning rate via scheduler
+        3. Executes callbacks for monitoring and visualization
+        """
+        for self.current_epoch in range(self.num_epochs + 1):
+            self._train_epoch()
+
+            if self.scheduler is not None:
+                self.scheduler.step()
+                self.current_lr = self.optimizer.param_groups[0]["lr"]
+
+            self.pinn.model.eval()
+            with torch.no_grad():
+                if self.rank == 0:
+                    for callback in self.callbacks_organizer.base_callbacks:
+                        callback(self)
+
+            self.pinn.model.train()
+            if self.rank == 0:
+                for callback in self.callbacks_organizer.grad_callbacks:
+                    callback(self)
 
 
 class TrainerOneBatch(Trainer):
@@ -274,8 +322,17 @@ class TrainerOneBatch(Trainer):
         """
         self.pinn.select_batch(0)
         self.optimizer.zero_grad()
-        batch_loss, losses = self.calc_loss(self)
-        batch_loss.backward()
+        
+        if self.mixed_training:
+            with torch.amp.autocast('cuda'):
+                batch_loss, losses = self.calc_loss(self)
+            self.scaler.scale(batch_loss).backward()
+            self.scaler.step(self.optimizer)
+            self.scaler.update()
+        else:
+            batch_loss, losses = self.calc_loss(self)
+            batch_loss.backward()
+            self.optimizer.step()
+            
         self.epoch_loss_detailed += losses.detach()
         self.total_loss += batch_loss.detach()
-        self.optimizer.step()

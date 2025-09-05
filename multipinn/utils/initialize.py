@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 def initialize_model(
-    cfg: DictConfig, input_dim: int, output_dim: int
+    cfg: DictConfig, input_dim: int, output_dim: int, rank: int=0
 ) -> torch.nn.Module:
     """
     Initialize a neural network model based on configuration settings.
@@ -28,13 +28,13 @@ def initialize_model(
     with open_dict(cfg.model.params):
         cfg.model.params.input_dim = input_dim
         cfg.model.params.output_dim = output_dim
-
-    logger.info(f"Model: {cfg.model.type}")
-    logger.info(f"Model params: {cfg.model.params}")
+    if rank == 0:
+        logger.info(f"Model: {cfg.model.type}")
+        logger.info(f"Model params: {cfg.model.params}")
     return instantiate(cfg.model_target, **cfg.model.params)
 
 
-def initialize_regularization(cfg: DictConfig) -> Tuple[Optional[Callable], str]:
+def initialize_regularization(cfg: DictConfig, rank: int=0) -> Tuple[Optional[Callable], str]:
     """
     Initialize the loss regularization function based on configuration settings.
 
@@ -50,12 +50,14 @@ def initialize_regularization(cfg: DictConfig) -> Tuple[Optional[Callable], str]
             - loss_type (str): Description of the loss calculation method
     """
     if cfg.regularization.type != "None" and cfg.regularization.type is not None:
-        logger.info(f"Regularization type: {cfg.regularization.type}")
-        logger.info(f"Regularization parameters: {cfg.regularization.params}")
+        if rank == 0:
+            logger.info(f"Regularization type: {cfg.regularization.type}")
+            logger.info(f"Regularization parameters: {cfg.regularization.params}")
         calc_loss = instantiate(cfg.regularization_target, **cfg.regularization.params)
 
     else:
-        logger.info(f"Using calc_closs={cfg.trainer.calc_loss}")
+        if rank == 0:
+            logger.info(f"Using calc_loss={cfg.trainer.calc_loss}")
         calc_loss = cfg.trainer.calc_loss  # "mean" or "legacy"
 
     return calc_loss

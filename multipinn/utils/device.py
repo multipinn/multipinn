@@ -45,8 +45,10 @@ def set_device(accelerator=None, gpu_id=0):
 
     logger.info(f"Device you are using is {device}")
 
-    if device == torch.device("cuda:0"):
-        torch.set_default_tensor_type("torch.cuda.FloatTensor")
+    if device.type == "cuda":
+        torch.cuda.set_device(device) 
+        torch.set_default_device(device)
+        torch.set_default_dtype(torch.float32)
 
 
 def set_seed(seed):

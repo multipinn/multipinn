@@ -5,7 +5,7 @@ from hydra.utils import instantiate
 from omegaconf import DictConfig
 
 from examples.navier_stokes_2D_obstacle.problem import (
-    navier_stokes_equation_with_obstacle,
+    problem,
 )
 from multipinn import *
 from multipinn.utils import (
@@ -21,7 +21,7 @@ def train(cfg: DictConfig):
     config_save_path = os.path.join(cfg.paths.save_dir, "used_config.yaml")
     save_config(cfg, config_save_path)
 
-    conditions, input_dim, output_dim = navier_stokes_equation_with_obstacle(
+    conditions, input_dim, output_dim = problem(
         re=cfg.problem.re
     )
 
@@ -56,26 +56,26 @@ def train(cfg: DictConfig):
         save.SaveModel(cfg.paths.save_dir, period=cfg.visualization.save_period),
     ]
 
-    callbacks += [
-        points.LiveScatterPrediction(
-            save_dir=cfg.paths.save_dir,
-            period=cfg.visualization.save_period,
-            save_mode=cfg.visualization.save_mode,
-            output_index=i,
-        )
-        for i in range(output_dim)
-    ]
+    # callbacks += [
+    #     points.LiveScatterPrediction(
+    #         save_dir=cfg.paths.save_dir,
+    #         period=cfg.visualization.save_period,
+    #         save_mode=cfg.visualization.save_mode,
+    #         output_index=i,
+    #     )
+    #     for i in range(output_dim)
+    # ]
 
-    callbacks += [
-        heatmap.HeatmapPrediction(
-            grid=grid,
-            period=cfg.visualization.save_period,
-            save_dir=cfg.paths.save_dir,
-            save_mode=cfg.visualization.save_mode,
-            output_index=i,
-        )
-        for i in range(output_dim)
-    ]
+    # callbacks += [
+    #     heatmap.HeatmapPrediction(
+    #         grid=grid,
+    #         period=cfg.visualization.save_period,
+    #         save_dir=cfg.paths.save_dir,
+    #         save_mode=cfg.visualization.save_mode,
+    #         output_index=i,
+    #     )
+    #     for i in range(output_dim)
+    # ]
 
     trainer = Trainer(
         pinn=pinn,
@@ -83,6 +83,7 @@ def train(cfg: DictConfig):
         scheduler=scheduler,
         num_epochs=cfg.trainer.num_epochs,
         update_grid_every=cfg.trainer.grid_update,
+        num_batches=3,
         calc_loss=calc_loss,
         callbacks_organizer=CallbacksOrganizer(callbacks),
     )

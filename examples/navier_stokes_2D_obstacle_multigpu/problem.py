@@ -40,9 +40,9 @@ def problem(re=50):
         f, u, v, p, x, y = basic_symbols(model, arg)
         return [u - (-0.16 * y**2 + 1), v, p]
 
-    # def bc_x_max(model, arg):
-    #     f, u, v, p, x, y = basic_symbols(model, arg)
-    #     return [p]
+    def bc_x_max(model, arg):
+        f, u, v, p, x, y = basic_symbols(model, arg)
+        return [p]
 
     def block(model, arg):
         f, u, v, p, x, y = basic_symbols(model, arg)
@@ -63,8 +63,8 @@ def problem(re=50):
     pde = [
         Condition(inner, domain),
         Condition(bc_x_min, x_min),
-        # Condition(bc_x_max, x_max),
+        Condition(bc_x_max, x_max),
         Condition(block, walls),
     ]
 
-    return pde, input_dim, output_dim
+    return pde, input_dim, output_dim 
