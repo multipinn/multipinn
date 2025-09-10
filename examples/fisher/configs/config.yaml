@@ -1,0 +1,46 @@
+problem:
+  name: "fisher"
+
+model:
+  type: FNN
+  params:
+    hidden_layers: [128, 128, 128, 128, 128, 128]
+
+model_target:
+  _target_: multipinn.neural_network.${model.type}
+
+regularization:
+  type: Constant # Pointwise, Constant, Gradient, Normal, null
+  params:
+    # ignored_indexes: [0]
+    lambdas: [1, 1, 1]
+
+regularization_target:
+  _target_: multipinn.regularization.${regularization.type}Losses
+
+generator:
+  domain_points: 200_000
+  bound_points: 20_000
+  sampler: "pseudo"
+
+trainer:
+  num_epochs: 100_000
+  grid_update: 100_000
+  random_seed: 42
+  calc_loss: "legacy" # "mean", "legacy"
+
+visualization:
+  grid_plot_points: 15_000
+  save_period: 500
+  save_mode: "html"
+
+scheduler:
+  _target_: torch.optim.lr_scheduler.ExponentialLR
+  gamma: 0.9999
+
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 0.001
+
+paths:
+  save_dir: ${hydra:runtime.cwd}/examples/${problem.name}/artifacts/${model.type}_${regularization.type}
