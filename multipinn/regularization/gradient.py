@@ -29,7 +29,9 @@ class GradientLosses(BasicLosses):
             raise Exception("Regularization does not supported system ODE")
 
         if self.lambda_regularization is None:
-            self.lambda_regularization = torch.ones((len(losses) - 1))
+            self.lambda_regularization = torch.ones(
+                (len(losses) - 1), device=losses[0].device
+            )
         losses[0].backward(retain_graph=True)
         grad_of_params = []
         for parameter in trainer.pinn.model.parameters():
@@ -44,7 +46,7 @@ class GradientLosses(BasicLosses):
             for parameter in trainer.pinn.model.parameters():
                 if parameter.grad is not None:
                     grad_of_params.append(torch.abs(parameter.grad).mean())
-            regularization = max_f / torch.tensor(grad_of_params).mean()
+            regularization = max_f / torch.stack(grad_of_params).mean()
             trainer.optimizer.zero_grad()
             regularization = (1 - self.alpha) * self.lambda_regularization[
                 ind
