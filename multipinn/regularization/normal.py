@@ -20,7 +20,9 @@ class NormalLosses(BasicLosses):
             raise Exception("Regularization does not supported system ODE")
 
         if self.lambda_regularization is None:
-            self.lambda_regularization = torch.ones((len(losses) - 1))
+            self.lambda_regularization = torch.ones(
+                (len(losses) - 1), device=losses[0].device
+            )
 
         last_layers = list(list(trainer.pinn.model.children())[-1].children())[-1]
         losses[0].backward(retain_graph=True)

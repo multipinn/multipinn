@@ -30,8 +30,8 @@ class AdaptiveWeightSum(nn.Module):
     ):
         super().__init__()
         self.lr = lr
-        self.weight = torch.Tensor(initial_weights).detach()
-        self.train_weight = torch.log(self.weight).requires_grad_()
+        self.weight = torch.as_tensor(initial_weights, dtype=torch.float32).detach()
+        self.train_weight = nn.Parameter(torch.log(self.weight))
         self.optimizer = torch.optim.Adam(
             params=(self.train_weight,), lr=self.lr, maximize=True, weight_decay=1e-6
         )
@@ -46,6 +46,8 @@ class AdaptiveWeightSum(nn.Module):
         Returns:
             torch.Tensor: The weighted sum of the input tensor using the current adaptive weights.
         """
+        if self.train_weight.device != x.device:
+            self.to(x.device)
         self.__update_weight()
         return self.__weight_sum(x)
 
