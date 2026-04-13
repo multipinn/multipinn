@@ -1,5 +1,5 @@
 problem:
-  name: "convection_1D"
+  name: "convection_1D_adaptive"
   betta: 30
   t_max: 10
 
