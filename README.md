@@ -1,87 +1,256 @@
 # MULTIPINN
 
-## Overview
-This project implements a Physics-Informed Neural Network (PINN) for solving differential equations. It provides a flexible framework for various physics-based problems, including fluid dynamics, heat transfer, and more.
+MULTIPINN is a Python framework for **Physics-Informed Neural Networks (PINNs)** built on top of **PyTorch**.  
+The repository contains reusable components for defining PDE-based problems, generating collocation points, configuring experiments with **Hydra**, training PINN models, and visualizing the results.
 
-## Features
-- Support for various neural network architectures (FNN, ResNet, Fourier Features, ...)
-- Adaptive point generation for efficient training
-- Visualization tools for results analysis
-- Integration with Hydra for easy configuration management
+## Canonical user tutorial
+
+The **canonical getting-started tutorial** for installation and the first run is:
+
+- [`docs/guide/getting_started.ipynb`](docs/guide/getting_started.ipynb)
+- GitHub-rendered version: `https://github.com/multipinn/multipinn/blob/main/docs/guide/getting_started.ipynb`
+
+This README and the notebook above are intentionally synchronized.  
+For all user-facing instructions, use the following common baseline:
+
+- **Supported Python versions:** `3.8` – `3.11`
+- **Recommended Python version for a new environment:** `3.10`
+- **Canonical installation command:** `pip install -e .`
+- `make install` is only a thin wrapper around the same command
+
+## What MULTIPINN provides
+
+- Fully-connected, residual, Fourier-feature, dense, factorized and other neural-network architectures
+- PINN conditions for PDE residuals, boundary conditions and extra data
+- Static and adaptive point generators
+- Hydra-based experiment configuration
+- Training loops for standard, gradual and multi-GPU workflows
+- Built-in callbacks for logging, checkpoints and visualization
+- Support for mesh- and graph-based workflows
+
+## Repository structure
+
+```text
+multipinn/                     
+examples/<example_name>/       
+examples/<example_name>/configs/config.yaml
+examples/<example_name>/problem.py
+examples/<example_name>/run_train.py
+docs/guide/getting_started.ipynb
+tests/
+```
+
+The main files a user usually edits in an example are:
+
+- `configs/config.yaml` — experiment parameters
+- `problem.py` — equations, geometry and conditions
+- `run_train.py` — training entry point
+
+## System requirements
+
+| Component | Requirement / note |
+|---|---|
+| Python | `>=3.8, <3.12` |
+| OS | Linux, macOS, Windows |
+| GPU | Optional, but strongly recommended for medium and large PDE problems |
+| Browser for Plotly PNG export | Google Chrome / Chromium may be required by `kaleido` for static PNG export |
+| Extra graph/mesh dependencies | Some GNN / mesh examples may require compatible PyG binary wheels, see below |
 
 ## Installation
-To install the project, use this command from makefile:
+
+All commands below assume that you run them **from the repository root**.
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/multipinn/multipinn.git
+cd multipinn
+```
+
+### 2. Create and activate a virtual environment
+
+#### Recommended: `venv`
+
+**Linux / macOS**
+```bash
+python3.10 -m venv .venv
+source .venv/bin/activate
+```
+
+If `python3.10` is not available, use any supported version from `3.8` to `3.11`.
+
+**Windows (PowerShell)**
+```powershell
+py -3.10 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+#### Alternative: `conda`
+
+```bash
+conda create -n multipinn python=3.10
+conda activate multipinn
+```
+
+### 3. Install the package
+
+```bash
+python -m pip install --upgrade pip
+pip install -e .
+```
+
+Equivalent shorthand from the Makefile:
 
 ```bash
 make install
 ```
 
-For development purposes, you can install additional dependencies:
+## Verifying the installation
+
+After installation, the following command should work:
+
+```bash
+python -c "import multipinn, torch; print('MULTIPINN import OK'); print('Torch:', torch.__version__)"
+```
+
+## Quick smoke test
+
+For a short sanity check, it is convenient to run a lightweight example with reduced settings.  
+The command below runs the `regression_1D` example for a few epochs and saves interactive HTML artifacts instead of PNG files:
+
+```bash
+python -m examples.regression_1D.run_train \
+  trainer.num_epochs=5 \
+  generator.domain_points=256 \
+  visualization.grid_plot_points=256 \
+  visualization.save_period=10 \
+  visualization.save_mode=html \
+  paths.save_dir=./artifacts_smoke/regression_1D
+```
+
+## First full example
+
+A more representative PDE example is `poisson_2D_1C`:
+
+```bash
+python -m examples.poisson_2D_1C.run_train
+```
+
+If you want a shorter local run, override the defaults from Hydra:
+
+```bash
+python -m examples.poisson_2D_1C.run_train \
+  trainer.num_epochs=100 \
+  generator.domain_points=2000 \
+  generator.bound_points=400 \
+  visualization.grid_plot_points=1000 \
+  visualization.save_period=100 \
+  visualization.save_mode=html
+```
+
+## How to configure an experiment
+
+Typical workflow:
+
+1. Choose an example under `examples/`.
+2. Adjust the parameters in `configs/config.yaml`.
+3. Edit `problem.py` if you need to change equations, geometry or conditions.
+4. Run the experiment via `python -m examples.<example_name>.run_train`.
+
+Common Hydra sections in example configs:
+
+- `problem` — problem-specific parameters
+- `model` — neural-network architecture and its parameters
+- `regularization` — loss balancing strategy
+- `generator` — number of domain and boundary points
+- `trainer` — epochs, seeds, update frequency
+- `visualization` — plot density, save period, output format
+- `optimizer`, `scheduler` — optimizer and learning-rate schedule
+- `paths` — output directories
+
+## Results and artifacts
+
+Results are written to the directory defined by `paths.save_dir`.
+
+Typical artifacts include:
+
+- `used_config.yaml` — exact configuration used for the run
+- model checkpoints (`.pth`)
+- loss curves
+- Plotly visualizations in `html` and/or `png`
+- additional callback outputs depending on the example
+
+If you do not need static PNG files, prefer:
+
+```yaml
+visualization:
+  save_mode: html
+```
+
+This avoids extra browser requirements for Plotly image export.
+
+## Notes for GNN and mesh examples
+
+The base installation already includes `torch_geometric` from `requirements.txt`.  
+However, some graph- and mesh-based workflows can additionally depend on PyG binary packages such as:
+
+- `pyg_lib`
+- `torch_scatter`
+- `torch_sparse`
+- `torch_cluster`
+- `torch_spline_conv`
+
+If an example fails with errors related to `torch_scatter`, `torch_cluster`, `knn_graph` or `radius_graph`, install the matching PyG packages for your **PyTorch** and **CUDA** combination, then rerun the example.
+
+To check your current Torch and CUDA versions:
+
+```bash
+python -c "import torch; print(torch.__version__, torch.version.cuda)"
+```
+
+## Developer setup
+
+For development, install the package together with dev dependencies:
+
+```bash
+pip install -e ".[dev]"
+```
+
+Equivalent shorthand:
 
 ```bash
 make install.dev
 ```
 
-### Optional: Graph Neural Network (GNN) Support
-
-If you plan to use Graph Neural Networks (GNNs), you will need to install additional dependencies for `torch-geometric`, which depend on your CUDA version and Python environment. Follow the instructions below to install the necessary packages.
-
-1. **Check Your CUDA Version**:
-   Ensure you know your CUDA version. You can check this by running:
-
-   ```bash
-   nvcc --version
-   ```
-
-   Alternatively, you can check the version of PyTorch's CUDA support:
-
-   ```python
-   import torch
-   print(torch.version.cuda)
-   ```
-
-2. **Install `torch-geometric`**:
-   Follow the installation instructions from the [PyTorch Geometric documentation](https://pytorch-geometric.readthedocs.io/en/latest/install/installation.html#optional-dependencies). The installation command will depend on your CUDA version and Python environment. For example:
-
-   ```bash
-   # For CUDA 11.8 and torch 2.5.0
-    pip install torch_geometric
-
-    pip install pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-2.5.0+cu118.html
-
-   ```
-
-   Replace `cu113` with your specific CUDA version (e.g., `cu102` for CUDA 10.2).
-
-3. **Verify Installation**:
-   After installation, verify that `torch-geometric` is correctly installed by running:
-
-   ```python
-   import torch_geometric
-   print(torch_geometric.__version__)
-   ```
-
-
-## Documentation
-
-Comprehensive documentation is available in the `docs/` directory. You can build the documentation using MkDocs:
-
-```bash
-mkdocs build
-```
-
-## Testing
-To run the tests, use:
-```bash
-make test
-```
-
-## Contributing
-
-Contributions are welcome! Please follow these steps before submitting your pull request:
-1. Install pre-commit hooks:
+Install pre-commit hooks:
 
 ```bash
 make install-pre-commit
 ```
-2. Make your changes and commit your code.
+
+Run the test suite:
+
+```bash
+make test
+```
+
+## Contribution workflow
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Make a small, focused change.
+4. Run tests locally.
+5. Open a pull request with a concise description of the change.
+
+When you add or change user-facing behavior, update the corresponding documentation as well — at minimum this README and `docs/guide/getting_started.ipynb`.
+
+## Documentation policy for installation
+
+To avoid contradictory instructions across the repository, use the following rules in all user-facing documents:
+
+- keep the installation command as `pip install -e .`
+- keep the supported Python range as `3.8–3.11`
+- keep `docs/guide/getting_started.ipynb` as the main tutorial
+- treat `make install` only as a shorthand for `pip install -e .`
+- do not introduce alternative installation paths as the primary workflow unless they are synchronized here first
+
