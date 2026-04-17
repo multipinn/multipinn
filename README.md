@@ -31,8 +31,8 @@ For all user-facing instructions, use the following common baseline:
 ## Repository structure
 
 ```text
-multipinn/                     # Core library
-examples/<example_name>/       # Ready-to-run problems
+multipinn/                     
+examples/<example_name>/       
 examples/<example_name>/configs/config.yaml
 examples/<example_name>/problem.py
 examples/<example_name>/run_train.py
