@@ -366,8 +366,6 @@ class ProductShellDomain(BaseShell):
     """
 
     def __init__(self, shell: BaseShell, geom: Domain):
-        if shell.dim != geom.dim:
-            raise ValueError("Dimensions do not match")
         super().__init__(
             shell.dim + geom.dim,
             (
@@ -447,13 +445,9 @@ class ProductDomainShell(BaseShell):
         geom (Domain): The domain component
         shell (BaseShell): The shell component
 
-    Raises:
-        ValueError: If domain and shell have different dimensions
     """
 
     def __init__(self, geom: Domain, shell: BaseShell):
-        if shell.dim != geom.dim:
-            raise ValueError("Dimensions do not match")
         super().__init__(
             shell.dim + geom.dim,
             (
